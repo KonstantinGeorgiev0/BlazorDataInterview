@@ -1034,3 +1034,4 @@
 /Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/refint/ItilityInterview.dll
 /Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/ItilityInterview.pdb
 /Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/ref/ItilityInterview.dll
+/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/ItilityInterview.sourcelink.json
