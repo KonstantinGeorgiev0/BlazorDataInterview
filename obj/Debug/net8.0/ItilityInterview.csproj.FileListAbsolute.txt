@@ -1035,3 +1035,8 @@
 /Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/ItilityInterview.pdb
 /Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/ref/ItilityInterview.dll
 /Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/ItilityInterview.sourcelink.json
+/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/bin/Debug/net8.0/wwwroot/_framework/BlazorBootstrap.wasm
+/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/bin/Debug/net8.0/wwwroot/_framework/BlazorBootstrap.wasm.gz
+/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/bin/Debug/net8.0/BlazorBootstrap.dll
+/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/webcil/BlazorBootstrap.wasm
+/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/compressed/9ntdvns7oc.gz

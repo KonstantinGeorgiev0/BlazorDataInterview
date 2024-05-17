@@ -17,14 +17,6 @@
       "PackagePath": "staticwebassets/css/app.css"
     },
     {
-      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/css/bootstrap/bootstrap.min.css",
-      "PackagePath": "staticwebassets/css/bootstrap/bootstrap.min.css"
-    },
-    {
-      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/css/bootstrap/bootstrap.min.css.map",
-      "PackagePath": "staticwebassets/css/bootstrap/bootstrap.min.css.map"
-    },
-    {
       "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/favicon.png",
       "PackagePath": "staticwebassets/favicon.png"
     },

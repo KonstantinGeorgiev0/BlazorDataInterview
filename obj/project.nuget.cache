@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "xoxAf3o/oBu91sO1GZkgjN/0mj2NRnYQmE5833xP0bgwAoS8cWFhurZyRLZ81e9ZKL20i3Tz1n4/tWPhI8o2QQ==",
+  "dgSpecHash": "apONNefNwzq/qEXzRtb7EQsWVhg4igybTFoOr71cLEw9sbSOnyBrAvs9dU3VEw99TkiJDlRrYjfj32hZPaeeRA==",
   "success": true,
   "projectFilePath": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/ItilityInterview.csproj",
   "expectedPackageFiles": [
+    "/Users/macbookpro/.nuget/packages/blazor.bootstrap/2.2.0/blazor.bootstrap.2.2.0.nupkg.sha512",
     "/Users/macbookpro/.nuget/packages/csvhelper/32.0.3/csvhelper.32.0.3.nupkg.sha512",
     "/Users/macbookpro/.nuget/packages/microsoft.aspnetcore.authorization/8.0.4/microsoft.aspnetcore.authorization.8.0.4.nupkg.sha512",
     "/Users/macbookpro/.nuget/packages/microsoft.aspnetcore.components/8.0.4/microsoft.aspnetcore.components.8.0.4.nupkg.sha512",

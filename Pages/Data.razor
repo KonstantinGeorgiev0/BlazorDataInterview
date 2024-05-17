@@ -3,7 +3,7 @@
 @using System.Globalization
 @inject HttpClient Http
 
-<PageTitle>Data</PageTitle>
+<PageTitle>IPC</PageTitle>
 
 <h1>Data Analysis on Industrial PC Underutilization</h1>
 
@@ -59,7 +59,7 @@ else
         {
             if (i > 0)
             {
-                 List<string> ipcStringList = dataRows[i].Split(";").ToList();
+                List<string> ipcStringList = dataRows[i].Split(";").ToList();
                  
                 IPCData IpcData = new IPCData(
                     ipcStringList[0],
@@ -71,8 +71,7 @@ else
                     ipcStringList[6],
                     Int32.Parse(ipcStringList[7])
                 );
-
-                 listOfIpcData.Add(IpcData);
+                listOfIpcData.Add(IpcData);
             }
         }
     }

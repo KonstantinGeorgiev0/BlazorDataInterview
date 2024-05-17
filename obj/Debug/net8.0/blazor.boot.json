@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "ItilityInterview",
   "resources": {
-    "hash": "sha256-GhYVAsaoMtJrP/+oRMu2clnpxaOJLq8oJ8qLJwsqgRg=",
+    "hash": "sha256-qbcFEm6c46Dofkk/Eork168dyX8HV3/us6Fq5cDdHto=",
     "jsModuleNative": {
       "dotnet.native.8.0.4.ibm6gtwaig.js": "sha256-ju0+XWE0ihz554eKEj0HQ8Opa61xpbUIaX5/MNo8we4="
     },
@@ -17,6 +17,7 @@
       "icudt_no_CJK.dat": "sha256-L7sV7NEYP37/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs="
     },
     "assembly": {
+      "BlazorBootstrap.wasm": "sha256-DXl738A3nveFxYK+NWkxvHdTmicdO6btBT/VduMi0Co=",
       "CsvHelper.wasm": "sha256-hxxrJU9+mjsKusNdSm68R+1KxjoPVG+u/h5ufsIAl8M=",
       "Microsoft.AspNetCore.Authorization.wasm": "sha256-kcIOasiNC2iD+Tg022f6aTCKnjwzyE8MQTNpQDoIzyw=",
       "Microsoft.AspNetCore.Components.wasm": "sha256-DQpYnGUhJtjc5Lun2LKa8TfWW1uZsIf0oaXSKg5o8TY=",
@@ -209,10 +210,10 @@
       "mscorlib.wasm": "sha256-VCfYgt1mcjITabSTosCDVZ+68ea3Z7kakTFaLNLG+18=",
       "netstandard.wasm": "sha256-YOZxxR9PM3Dltcijfb0Q4FD39DkWZbZ1e2ScbZDvWJ4=",
       "System.Private.CoreLib.wasm": "sha256-NrT1QkAzVU//2wgK9vXdq77lCGvLJ4IOZ+Aegesyanc=",
-      "ItilityInterview.wasm": "sha256-rlYQDApebhUqMNlG274nyvlxmOF+ACCPQIofXH5JczU="
+      "ItilityInterview.wasm": "sha256-XbEFxRQoe8Ot4YwoTPG05uHvdYQlDUBACeQKMhXz39Y="
     },
     "pdb": {
-      "ItilityInterview.pdb": "sha256-5j72V8Rj2yHxn17I/y8jNN4w02wSF5OuAoEaOl8uHS4="
+      "ItilityInterview.pdb": "sha256-9+cElixcLRhrfR7MVCbU5ntmkO1LW0i1ZM3BjTJ/9Lc="
     }
   },
   "cacheBootResources": true,
