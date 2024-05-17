@@ -1,6 +1,6 @@
-Itility Technical Interview Assignment
+# Itility Technical Interview Assignment
 
-Task
+## Task
 In our "Smart applicator" project we take pictures of pizzas on a production line to determine the amount of cheese.
 
 For this, we have a set-up of a camera and an IPC (industrial PC) next to the production line.
@@ -12,6 +12,6 @@ The file in the attachment shows the measurement data of the IPC's over 2 months
 We want to use these measurements to define if there are IPC's that do not use their full capacity.
 
 Assignment:
-    * Use Blazor to show which IPC’s can be downsized and show a couple of visuals in a PowerPoint presentation.
+* Use Blazor to show which IPC’s can be downsized and show a couple of visuals in a PowerPoint presentation.
 
 
