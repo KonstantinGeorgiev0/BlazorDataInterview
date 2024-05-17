@@ -1,7 +1,9 @@
 ﻿@page "/data"
 @using ItilityInterview.Models
+@using ItilityInterview.Services
 @using System.Globalization
 @inject HttpClient Http
+@inject DataService dataService
 
 <PageTitle>IPC</PageTitle>
 
@@ -52,27 +54,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        string csvIpcData = await Http.GetStringAsync("sample-data/IPC_data_copy.csv");
-        List<string> dataRows = csvIpcData.Split("\n").ToList();
-
-        for (int i = 0; i < dataRows.Count; i++)
-        {
-            if (i > 0)
-            {
-                List<string> ipcStringList = dataRows[i].Split(";").ToList();
-                 
-                IPCData IpcData = new IPCData(
-                    ipcStringList[0],
-                    Int32.Parse(ipcStringList[1]),
-                    DateTime.Parse(ipcStringList[2]),
-                    double.Parse(ipcStringList[3].Replace(',', '.')),
-                    double.Parse(ipcStringList[4].Replace(',', '.')),
-                    double.Parse(ipcStringList[5].Replace(',', '.')),
-                    ipcStringList[6],
-                    Int32.Parse(ipcStringList[7])
-                );
-                listOfIpcData.Add(IpcData);
-            }
-        }
+        listOfIpcData = await dataService.LoadDataAsync("sample-data/IPC_data_copy.csv");
     }
 }    
