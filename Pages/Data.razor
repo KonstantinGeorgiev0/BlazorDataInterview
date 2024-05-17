@@ -1,14 +1,13 @@
 ﻿@page "/data"
-@using ItilityInterview.Services
 @using ItilityInterview.Models
-@inject DataService DataService
+@using System.Globalization
 @inject HttpClient Http
 
 <PageTitle>Data</PageTitle>
 
 <h1>Data Analysis on Industrial PC Underutilization</h1>
 
-@if (ipcData == null)
+@if (listOfIpcData == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -31,7 +30,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in ipcData)
+            @foreach (var item in listOfIpcData)
             {
                 <tr>
                     <td>@item.IPC</td>
@@ -49,11 +48,32 @@ else
 }
 
 @code {
-    private List<IPCData> ipcData;
-    
+    List<IPCData> listOfIpcData = new List<IPCData>();
+
     protected override async Task OnInitializedAsync()
     {
-        var csvFilePath = "sample-data/IPC_data_copy.csv";
-        ipcData = await DataService.LoadDataAsync(csvFilePath);
+        string csvIpcData = await Http.GetStringAsync("sample-data/IPC_data_copy.csv");
+        List<string> dataRows = csvIpcData.Split("\n").ToList();
+
+        for (int i = 0; i < dataRows.Count; i++)
+        {
+            if (i > 0)
+            {
+                 List<string> ipcStringList = dataRows[i].Split(";").ToList();
+                 
+                IPCData IpcData = new IPCData(
+                    ipcStringList[0],
+                    Int32.Parse(ipcStringList[1]),
+                    DateTime.Parse(ipcStringList[2]),
+                    double.Parse(ipcStringList[3].Replace(',', '.')),
+                    double.Parse(ipcStringList[4].Replace(',', '.')),
+                    double.Parse(ipcStringList[5].Replace(',', '.')),
+                    ipcStringList[6],
+                    Int32.Parse(ipcStringList[7])
+                );
+
+                 listOfIpcData.Add(IpcData);
+            }
+        }
     }
 }    
