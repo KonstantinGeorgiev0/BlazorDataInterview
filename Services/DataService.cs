@@ -1,74 +1,59 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using CsvHelper;
-using CsvHelper.Configuration;
-using CsvHelper.Configuration.Attributes;
+using System.Net.Http;
+using System.Threading.Tasks;
 using ItilityInterview.Models;
 
 namespace ItilityInterview.Services
 {
-    public class DataService(HttpClient httpClient)
+    public class DataService
     {
-        private readonly HttpClient _httpClient = httpClient;
+        private readonly HttpClient _httpClient;
 
-        // Loads data from a CSV file asynchronously
+        public DataService(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
         public async Task<List<IPCData>> LoadDataAsync(string csvFilePath)
         {
-            List<IPCData> ipcData = new List<IPCData>();
+            List<IPCData> listOfIpcData = new List<IPCData>();
 
-            try {
-                // Get the CSV file stream from the provided URL
-                var csvStream = await _httpClient.GetStreamAsync(csvFilePath);
+            try
+            {
+                string csvIpcData = await _httpClient.GetStringAsync(csvFilePath);
+                List<string> dataRows = csvIpcData.Split("\n").ToList();
 
-                // Read the CSV file using CsvHelper library
-                using var reader = new StreamReader(csvStream);
-                using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
+                for (int i = 0; i < dataRows.Count; i++)
                 {
-                    Delimiter = ";",
-                    BadDataFound = null,
-                    HasHeaderRecord = true // skip the header row
-                });
+                    if (i > 0 && !string.IsNullOrWhiteSpace(dataRows[i])) // Skip the header and empty rows
+                    {
+                        List<string> ipcStringList = dataRows[i].Split(";").ToList();
 
-                // Skip the header row
-                csv.Read();
-                csv.ReadHeader();
+                        IPCData ipcData = new IPCData(
+                            ipcStringList[0],
+                            Int32.Parse(ipcStringList[1]),
+                            DateTime.Parse(ipcStringList[2]),
+                            double.Parse(ipcStringList[3].Replace(',', '.')),
+                            double.Parse(ipcStringList[4].Replace(',', '.')),
+                            double.Parse(ipcStringList[5].Replace(',', '.')),
+                            ipcStringList[6],
+                            Int32.Parse(ipcStringList[7])
+                        );
 
-                // Read the remaining rows and convert them to IPCData objects
-                while (await csv.ReadAsync())
-                {
-                    var record = csv.GetRecord<IPCData>();
-                    ipcData.Add(record);
+                        listOfIpcData.Add(ipcData);
+                    }
                 }
-
-                // // Skip the first row (header) and convert the remaining CSV records to a list of PizzaAnalyzer objects
-                // ipcData = csv.GetRecords<IPCData>().Skip(1).ToList();
-                // Clean the data by removing invalid or inconsistent rows
-                CleanData(ipcData);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading data: {ex.Message}");
+                // handle the exception 
+                Console.WriteLine($"An error occurred while loading data: {ex.Message}");
             }
-            return ipcData;
-        }
-        private static void CleanData(List<IPCData> ipcData)
-        {   
-            // remove rows with missing values
-            ipcData.RemoveAll(p => p.IPC == null || p.MetricID == null);
-            ipcData.RemoveAll(p => p.AvgValue == 0 || p.MinValue == 0 || p.MaxValue == 0 || p.CpuMHz == 0);
 
-            // ensure logical consistency
-            ipcData.RemoveAll(p => p.AvgValue < p.MinValue || p.AvgValue > p.MaxValue);
-
-            // remove rows with invalid time
-            ipcData.RemoveAll(p => p.Time == DateTime.MinValue);
-
-            // remove outliers
-            int threshold = ipcData.Max(p => p.CpuMHz);
-            ipcData.RemoveAll(p => p.AvgValue > threshold || p.MinValue > threshold || p.MaxValue > threshold);
+            return listOfIpcData;
         }
     }
 }
