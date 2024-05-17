@@ -1,0 +1,69 @@
+{
+  "Files": [
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/bin/Debug/net8.0/wwwroot/_framework/blazor.webassembly.js",
+      "PackagePath": "staticwebassets/_framework/blazor.webassembly.js"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/compressed/k648sr11a2.gz",
+      "PackagePath": "staticwebassets/_framework/blazor.webassembly.js.gz"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/obj/Debug/net8.0/scopedcss/bundle/ItilityInterview.styles.css",
+      "PackagePath": "staticwebassets/ItilityInterview.styles.css"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/css/app.css",
+      "PackagePath": "staticwebassets/css/app.css"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/css/bootstrap/bootstrap.min.css",
+      "PackagePath": "staticwebassets/css/bootstrap/bootstrap.min.css"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/css/bootstrap/bootstrap.min.css.map",
+      "PackagePath": "staticwebassets/css/bootstrap/bootstrap.min.css.map"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/favicon.png",
+      "PackagePath": "staticwebassets/favicon.png"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/icon-192.png",
+      "PackagePath": "staticwebassets/icon-192.png"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/index.html",
+      "PackagePath": "staticwebassets/index.html"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/sample-data/IPC_data_copy.csv",
+      "PackagePath": "staticwebassets/sample-data/IPC_data_copy.csv"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/sample-data/testcase_smart_applicator_V8.2_020823.zip.csv",
+      "PackagePath": "staticwebassets/sample-data/testcase_smart_applicator_V8.2_020823.zip.csv"
+    },
+    {
+      "Id": "/Users/macbookpro/konstantin/projects/blazor/ItilityInterview/wwwroot/sample-data/weather.json",
+      "PackagePath": "staticwebassets/sample-data/weather.json"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.ItilityInterview.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.ItilityInterview.props",
+      "PackagePath": "build\\ItilityInterview.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.ItilityInterview.props",
+      "PackagePath": "buildMultiTargeting\\ItilityInterview.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.ItilityInterview.props",
+      "PackagePath": "buildTransitive\\ItilityInterview.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

@@ -1,0 +1,59 @@
+﻿@page "/data"
+@using ItilityInterview.Services
+@using ItilityInterview.Models
+@inject DataService DataService
+@inject HttpClient Http
+
+<PageTitle>Data</PageTitle>
+
+<h1>Data Analysis on Industrial PC Underutilization</h1>
+
+@if (ipcData == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <h4>All IPC Data</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>IPC</th>
+                <th>Factory</th>
+                <th>Date</th>
+                <th>AvgValue</th>
+                <th>MinValue</th>
+                <th>MaxValue</th>
+                <th>Metric ID</th>
+                <th>CpuMHz</th>
+                @* <th>Avg Utilization (%)</th>
+                <th>Peak Utilization (%)</th> *@
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in ipcData)
+            {
+                <tr>
+                    <td>@item.IPC</td>
+                    <td>@item.DataFactory</td>
+                    <td>@item.Time.ToShortDateString()</td>
+                    <td>@item.AvgValue</td>
+                    <td>@item.MinValue</td>
+                    <td>@item.MaxValue</td>
+                    <td>@item.MetricID</td>
+                    <td>@item.CpuMHz</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<IPCData> ipcData;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var csvFilePath = "sample-data/IPC_data_copy.csv";
+        ipcData = await DataService.LoadDataAsync(csvFilePath);
+    }
+}    
