@@ -1,13 +1,45 @@
-@page "/visualization"
+﻿@page "/visualization"
 @using MudBlazor.Charts
 @using MudBlazor
+@using System;
+@using System.Linq;
+@using System.Text;
+@using System.Threading.Tasks;
 @using System.Collections.Generic
-@using ItilityInterview.Models
-@using ItilityInterview.Services
+@using BlazorInterview.Models
+@using BlazorInterview.Services
 @inject DataService DataService
 
 <div>
+    <p>Line Chart showcasing Industrial PCs (IPC) with ID ITLT 4301</p>
+    <p>An IPC is considered underutilized if its average utilization rate is below 50% and its peak utilization rate is below 75%.</p>
+    <p>Peak utilization is shown in blue and average utilization is shown in green.</p>
+    <div style="margin: 10px;">
+        <MudSelect T="string" Label="Coffee" AnchorOrigin="Origin.BottomCenter">
+            <MudSelectItem Value="@("Cappuccino")" />
+            <MudSelectItem Value="@("Cafe Latte")" />
+            <MudSelectItem Value="@("Espresso")" />
+        </MudSelect>
+    </div>
+    <p>Maximum CPU MHz: @maxCpuMHz</p>
+    <p>Average Utilization Rate: @averageUtilizationRate.ToString("F2")%</p>
+    <p>Peak Utilization Rate: @peakUtilizationRate.ToString("F2")%</p>
+    @if (isUnderutilized)
+    {
+        <p style="color: green;">This IPC is underutilized.</p>
+    }
+    else
+    {
+        <p style="color: red;">This IPC is not underutilized.</p>
+    }
+</div>
+<div>
     <MudChart ChartType="MudBlazor.ChartType.Line" ChartSeries="@Series" @bind-SelectedIndex="Index" XAxisLabels="@XAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+    <MudGrid>
+        <MudItem xs="6">
+            <MudSlider @bind-Value="Options.LineStrokeWidth" Min="1" Max="10" Color="Color.Info">Line Width: @Options.LineStrokeWidth.ToString()</MudSlider>
+        </MudItem>
+    </MudGrid>
 </div>
 
 @code {
@@ -18,6 +50,10 @@
     List<ChartSeries> Series = new List<ChartSeries>();
     string[] XAxisLabels = new string[0];
     int[] YAxisLabels = new int[0];
+    bool isUnderutilized = false;
+    double averageUtilizationRate = 0;
+    double peakUtilizationRate = 0;
+    int maxCpuMHz = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -25,12 +61,19 @@
         listOfIpcData = await DataService.LoadDataAsync("sample-data/testcase_smart_applicator_V8.2_020823.zip.csv");
         // filter data for ITLT4301 IPC
         dataITLT4301 = listOfIpcData
-            .Where(data => data.IPC.Trim().Equals("ITLT4301", StringComparison.OrdinalIgnoreCase))
-            .Take(20)
+            .Where(data => data.IPC.Trim().Equals("ITLT1504", StringComparison.OrdinalIgnoreCase))
             .ToList();
         // extract max and avg values
         var maxValues = dataITLT4301.Select(data => data.MaxValue).ToArray();
         var avgValues = dataITLT4301.Select(data => data.AvgValue).ToArray();
+        maxCpuMHz = dataITLT4301.Select(data => data.CpuMHz).Max();
+
+        // calculate utilization rates
+        averageUtilizationRate = dataITLT4301.Average(data => data.AverageUtilizationRate);
+        peakUtilizationRate = dataITLT4301.Average(data => data.PeakUtilizationRate);
+
+        // determine if IPC is underutilized
+        isUnderutilized = averageUtilizationRate < 50 && peakUtilizationRate < 75;
 
         // create chart series
         Series = new List<ChartSeries>()
@@ -38,7 +81,9 @@
             new ChartSeries() { Name = "MaxValue", Data = maxValues },
             new ChartSeries() { Name = "AvgValue", Data = avgValues },
         };
-        // create x-axis labels
-        XAxisLabels = dataITLT4301.Select(data => data.Time.ToString("dd")).ToArray();
+        // create x-axis labels, show every second entry
+        XAxisLabels = dataITLT4301
+            .Select((data, index) => index % 2 == 0 ? data.Time.ToString("dd") : "")
+            .ToArray();
     }
 }

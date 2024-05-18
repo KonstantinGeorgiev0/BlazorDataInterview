@@ -1,6 +1,6 @@
-using ItilityInterview.Models;
+using BlazorInterview.Models;
 
-namespace ItilityInterview.Services
+namespace BlazorInterview.Services
 {
     public class DataService(HttpClient httpClient)
     {
@@ -8,7 +8,7 @@ namespace ItilityInterview.Services
 
         public async Task<List<IPCData>> LoadDataAsync(string csvFilePath)
         {
-            List<IPCData> listOfIpcData = new List<IPCData>();
+            List<IPCData> listOfIpcData = [];
 
             try
             {
