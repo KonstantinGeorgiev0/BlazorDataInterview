@@ -21,15 +21,15 @@ namespace ItilityInterview.Services
                     {
                         List<string> ipcStringList = [.. dataRows[i].Split(";")];
 
-                        IPCData ipcData = new IPCData(
+                        IPCData ipcData = new(
                             ipcStringList[0],
-                            Int32.Parse(ipcStringList[1]),
+                            int.Parse(ipcStringList[1]),
                             DateTime.Parse(ipcStringList[2]),
                             double.Parse(ipcStringList[3].Replace(',', '.')),
                             double.Parse(ipcStringList[4].Replace(',', '.')),
                             double.Parse(ipcStringList[5].Replace(',', '.')),
                             ipcStringList[6],
-                            Int32.Parse(ipcStringList[7])
+                            int.Parse(ipcStringList[7])
                         );
 
                         listOfIpcData.Add(ipcData);
