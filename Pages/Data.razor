@@ -32,7 +32,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in listOfIpcData.Take(20))
+            @foreach (var item in dataITLT4301)
             {
                 <tr>
                     <td>@item.IPC</td>
@@ -51,9 +51,22 @@ else
 
 @code {
     List<IPCData> listOfIpcData = new List<IPCData>();
+    List<IPCData> dataITLT4301 = new List<IPCData>();
 
     protected override async Task OnInitializedAsync()
     {
         listOfIpcData = await dataService.LoadDataAsync("sample-data/testcase_smart_applicator_V8.2_020823.zip.csv");
+        // filter data for ITLT4301 IPC
+        dataITLT4301 = listOfIpcData
+            .Where(data => data.IPC.Trim().Equals("ITLT4301", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        // print all names of IPCs from csv data
+        // remove duplicates
+        var ipcNames = listOfIpcData.Select(data => data.IPC).Distinct().ToList();
+        Console.WriteLine($"IPC count: {ipcNames.Count}");
+        // print the first IPC string name
+        Console.WriteLine($"IPC name: {ipcNames[0]}");
+        // number of data points for ITLT4301 IPC
+        Console.WriteLine($"IPC ITLT4301 count: {dataITLT4301.Count}");
     }
 }    
