@@ -8,21 +8,34 @@
 @using System.Collections.Generic
 @using BlazorInterview.Models
 @using BlazorInterview.Services
+@using Syncfusion.Blazor.DropDowns
 @inject DataService DataService
 
 <div>
-    <p>Line Chart showcasing Industrial PCs (IPC) with ID ITLT 4301</p>
+    <p>Line Chart showcasing Industrial PC (IPC) with ID @IpcID</p>
     <p>An IPC is considered underutilized if its average utilization rate is below 50% and its peak utilization rate is below 75%.</p>
     <p>Peak utilization is shown in blue and average utilization is shown in green.</p>
     <div style="margin: 10px;">
-        <MudSelect T="string" Label="Coffee" AnchorOrigin="Origin.BottomCenter">
+        @* <MudSelect T="string" Label="IPC" @bind-bind-SelectedValue="@selectedIPC" AnchorOrigin="Origin.BottomCenter">
             <MudSelectItem Value="@("Cappuccino")" />
             <MudSelectItem Value="@("Cafe Latte")" />
             <MudSelectItem Value="@("Espresso")" />
-        </MudSelect>
+        </MudSelect> *@
+        @* <SfDropDownList TValue="string" TItem="Games" Placeholder="Select a game" DataSource="@LocalData">
+            <DropDownListFieldSettings Value="ID" Text="Text"></DropDownListFieldSettings>
+            <DropDownListEvents TValue="string" TItem="Games" ValueChange="OnValueChange"></DropDownListEvents>
+        </SfDropDownList> *@
+        <td>
+            <InputSelect id="IPC" @bind-Value="selectedIPC">
+                @foreach (var ipc in IpcList)
+                {
+                    <option value="@ipc">@ipc</option>
+                }
+            </InputSelect>
+        </td>
     </div>
     <p>Maximum CPU MHz: @maxCpuMHz</p>
-    <p>Average Utilization Rate: @averageUtilizationRate.ToString("F2")%</p>
+    @* <p>Average Utilization Rate: @averageUtilizationRate.ToString("F2")%</p>
     <p>Peak Utilization Rate: @peakUtilizationRate.ToString("F2")%</p>
     @if (isUnderutilized)
     {
@@ -31,7 +44,7 @@
     else
     {
         <p style="color: red;">This IPC is not underutilized.</p>
-    }
+    } *@
 </div>
 <div>
     <MudChart ChartType="MudBlazor.ChartType.Line" ChartSeries="@Series" @bind-SelectedIndex="Index" XAxisLabels="@XAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
@@ -46,34 +59,59 @@
     private int Index = -1; //default value cannot be 0 -> first selectedindex is 0.
     public MudBlazor.ChartOptions Options = new MudBlazor.ChartOptions();
     List<IPCData> listOfIpcData = new List<IPCData>();
-    List<IPCData> dataITLT4301 = new List<IPCData>();
+    List<IPCData> dataITLT = new List<IPCData>();
     List<ChartSeries> Series = new List<ChartSeries>();
     string[] XAxisLabels = new string[0];
     int[] YAxisLabels = new int[0];
-    bool isUnderutilized = false;
-    double averageUtilizationRate = 0;
-    double peakUtilizationRate = 0;
+    bool[] isUnderutilized = new bool[0];
+    // create arrays to store utilization rates
+    double[] averageUtilizationRate = new double[0];
+    double[] peakUtilizationRate = new double[0];
     int maxCpuMHz = 0;
+    string IpcID = "";
+    List<string> IpcList = new List<string>();
+    private string selectedIPC { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         // load IPC data
         listOfIpcData = await DataService.LoadDataAsync("sample-data/testcase_smart_applicator_V8.2_020823.zip.csv");
-        // filter data for ITLT4301 IPC
-        dataITLT4301 = listOfIpcData
+        // extract distinct IPC IDs
+        var IpcIDs = listOfIpcData.Select(data => data.IPC).Distinct().ToList();
+        foreach (var ipcId in IpcIDs.Take(20))
+        {
+            IpcList.Add(ipcId);
+        }
+        // filter data for ITLT IPC
+        dataITLT = listOfIpcData
             .Where(data => data.IPC.Trim().Equals("ITLT1504", StringComparison.OrdinalIgnoreCase))
             .ToList();
         // extract max and avg values
-        var maxValues = dataITLT4301.Select(data => data.MaxValue).ToArray();
-        var avgValues = dataITLT4301.Select(data => data.AvgValue).ToArray();
-        maxCpuMHz = dataITLT4301.Select(data => data.CpuMHz).Max();
+        var maxValues = dataITLT.Select(data => data.MaxValue).ToArray();
+        var avgValues = dataITLT.Select(data => data.AvgValue).ToArray();
+        var maxCpuMHz = dataITLT.Select(data => data.CpuMHz).Max();
+        IpcID = dataITLT.Select(data => data.IPC).First();
 
-        // calculate utilization rates
-        averageUtilizationRate = dataITLT4301.Average(data => data.AverageUtilizationRate);
-        peakUtilizationRate = dataITLT4301.Average(data => data.PeakUtilizationRate);
+        foreach (var ipc in IpcIDs)
+        {
+            dataITLT = listOfIpcData
+                .Where(data => data.IPC.Trim().Equals(ipc, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            // calculate utilization rates
+            averageUtilizationRate.Append(dataITLT.Average(data => data.AverageUtilizationRate));
+            peakUtilizationRate.Append(dataITLT.Average(data => data.PeakUtilizationRate));
+            // determine if IPC is underutilized
+            isUnderutilized.Append(averageUtilizationRate.Last() < 50 && peakUtilizationRate.Last() < 75);
+        }
 
-        // determine if IPC is underutilized
-        isUnderutilized = averageUtilizationRate < 50 && peakUtilizationRate < 75;
+        // console print all underutilized IPCs
+        for (int i = 0; i < IpcIDs.Count; i++)
+        {
+            if (isUnderutilized[i])
+            {
+                Console.WriteLine("IPC " + IpcIDs[i] + " is underutilized.");
+            }
+        }
 
         // create chart series
         Series = new List<ChartSeries>()
@@ -82,7 +120,7 @@
             new ChartSeries() { Name = "AvgValue", Data = avgValues },
         };
         // create x-axis labels, show every second entry
-        XAxisLabels = dataITLT4301
+        XAxisLabels = dataITLT
             .Select((data, index) => index % 2 == 0 ? data.Time.ToString("dd") : "")
             .ToArray();
     }
