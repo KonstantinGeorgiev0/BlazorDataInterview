@@ -1,0 +1,122 @@
+@page "/chart2"
+@using ItilityInterview.Models
+@using ItilityInterview.Services
+@inject DataService DataService
+
+<LineChart @ref="lineChart" Width="1000" Class="mb-4"/>
+
+@code {
+    private LineChart lineChart = default!;
+    private LineChartOptions lineChartOptions = default!;
+    private ChartData chartData = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var colors = ColorBuilder.CategoricalTwelveColors;
+        
+        // load IPC data
+        var ipcData = await DataService.LoadDataAsync("sample-data/testcase_smart_applicator_V8.2_020823.zip.csv");
+        // get data only from IPC with ITLT4301
+        var dataITLT4301 = ipcData
+            .Where(data => data.IPC.Trim().Equals("ITLT4301", StringComparison.OrdinalIgnoreCase))
+            .Take(15)
+            .ToList();
+
+        ipcData = dataITLT4301;
+
+        // data values
+        var dates = ipcData.Select(data => data.Time.ToString("MM/dd/yyyy")).ToList();
+        var avgValues = ipcData.Select(data => data.AvgValue).ToList();
+        var minValues = ipcData.Select(data => data.MinValue).ToList();
+        var maxValues = ipcData.Select(data => data.MaxValue).ToList();
+        // take only the dd part of the date for the x axis label
+        var labels = ipcData.Select(data => data.Time.ToString("dd")).ToList();
+
+        // Logging to check processed data
+        Console.WriteLine($"Labels: {string.Join(", ", labels)}");
+        Console.WriteLine($"AvgValues: {string.Join(", ", avgValues)}");
+        Console.WriteLine($"MinValues: {string.Join(", ", minValues)}");
+        Console.WriteLine($"MaxValues: {string.Join(", ", maxValues)}");
+
+        var datasets = new List<IChartDataset>();
+
+        var dataset1 = new LineChartDataset
+                       {
+                           Label = "MaxValue",
+                           Data = maxValues,
+                           BackgroundColor = new List<string> { colors[0] },
+                           BorderColor = new List<string> { colors[0] },
+                           BorderWidth = new List<double> { 2 },
+                           HoverBorderWidth = new List<double> { 4 },
+                           PointBackgroundColor = new List<string> { colors[0] },
+                           PointRadius = new List<int> { 0 }, // hide points
+                           PointHoverRadius = new List<int> { 4 }
+                       };
+        datasets.Add(dataset1);
+
+        var dataset2 = new LineChartDataset
+                       {
+                           Label = "AvgValue",
+                           Data = avgValues,
+                           BackgroundColor = new List<string> { colors[1] },
+                           BorderColor = new List<string> { colors[1] },
+                           BorderWidth = new List<double> { 2 },
+                           HoverBorderWidth = new List<double> { 4 },
+                           PointBackgroundColor = new List<string> { colors[1] },
+                           PointRadius = new List<int> { 0 }, // hide points
+                           PointHoverRadius = new List<int> { 4 }
+                       };
+        datasets.Add(dataset2);
+
+        var dataset3 = new LineChartDataset
+                       {
+                           Label = "MinValue",
+                           Data = minValues,
+                           BackgroundColor = new List<string> { colors[2] },
+                           BorderColor = new List<string> { colors[2] },
+                           BorderWidth = new List<double> { 2 },
+                           HoverBorderWidth = new List<double> { 4 },
+                           PointBackgroundColor = new List<string> { colors[2] },
+                           PointRadius = new List<int> { 0 }, // hide points
+                           PointHoverRadius = new List<int> { 4 }
+                       };
+        datasets.Add(dataset3);
+
+        chartData = new ChartData
+                    {
+                        Labels = labels,
+                        Datasets = datasets
+                    };
+
+        // check if the chart data is loaded
+        Console.WriteLine($"Chart data: {chartData}");
+
+        lineChartOptions = new();
+        lineChartOptions.Responsive = true;
+        lineChartOptions.Interaction = new Interaction { Mode = InteractionMode.Index };
+
+        lineChartOptions.Scales.X!.Title!.Text = "Date";
+        lineChartOptions.Scales.X.Title.Display = true;
+
+        lineChartOptions.Scales.Y!.Title!.Text = "CPU USAGE (%)";
+        lineChartOptions.Scales.Y.Title.Display = true;
+
+        lineChartOptions.Plugins.Title!.Text = "IPC";
+        lineChartOptions.Plugins.Title.Display = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        Console.WriteLine("Rendering chart...");
+        // console logging to check if the chart is rendered
+        Console.WriteLine($"First render: {firstRender}");
+        Console.WriteLine($"Chart data: {chartData}");
+        Console.WriteLine($"Line chart: {lineChart}");
+        // check if the chart data is loaded and the chart is initialized
+        @* if (firstRender && chartData != null && lineChart != null)
+        {
+        } *@
+        await lineChart.InitializeAsync(chartData, lineChartOptions);
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}
