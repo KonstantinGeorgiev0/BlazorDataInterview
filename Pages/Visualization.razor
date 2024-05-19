@@ -43,55 +43,8 @@
             <MudSlider @bind-Value="Options.LineStrokeWidth" Min="1" Max="10" Color="Color.Info">Line Width: @Options.LineStrokeWidth.ToString()</MudSlider>
         </MudItem>
     </MudGrid>
+
+    <MudChart ChartType="MudBlazor.ChartType.Line" ChartSeries="@Series2" @bind-SelectedIndex="Index" XAxisLabels="@XAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
 </div>
 
-@code {
-    private int Index = -1; //default value cannot be 0 -> first selectedindex is 0.
-    public MudBlazor.ChartOptions Options = new MudBlazor.ChartOptions();
-    List<IPCData> listOfIpcData = new List<IPCData>();
-    List<IPCData> dataITLT = new List<IPCData>();
-    List<ChartSeries> Series = new List<ChartSeries>();
-    string[] XAxisLabels = new string[0];
-    int[] YAxisLabels = new int[0];
-    // create arrays to store utilization rates
-    public double[] AvgValue = new double[0];
-    public double[] MaxValue = new double[0];
-    int maxCpuMHz = 0;
-    string IpcID = "";
-    List<string> IpcList = new List<string>();
-    public string selectedIPC { get; set; }
-    string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
 
-    protected override async Task OnInitializedAsync()
-    {
-        // load IPC data
-        listOfIpcData = await DataService.LoadDataAsync(csvFilePath);
-        // extract IPC IDs
-        IpcList = listOfIpcData.Select(data => data.IPC).Distinct().ToList();
-        // set default IPC
-        selectedIPC = IpcList[0];
-        // update visualization
-        await UpdateVisualizationAsync(selectedIPC);
-    }
-
-    private async Task OnIpcSelectionChange(ChangeEventArgs e)
-    {
-        selectedIPC = e.Value.ToString();
-        await UpdateVisualizationAsync(selectedIPC);
-    }
-
-    private async Task UpdateVisualizationAsync(string selectedIPC)
-    {
-        // filter data for selected IPC
-        dataITLT = listOfIpcData.Where(data => data.IPC == selectedIPC).ToList();
-        // extract average and peak utilization rates
-        AvgValue = dataITLT.Select(data => data.AvgValue).ToArray();
-        MaxValue = dataITLT.Select(data => data.MaxValue).ToArray();
-        maxCpuMHz = dataITLT.Select(data => data.CpuMHz).Max();
-
-        // update chart series
-        Series.Clear();
-        Series.Add(new ChartSeries { Name = "Average Utilization Rate", Data = AvgValue });
-        Series.Add(new ChartSeries { Name = "Peak Utilization Rate", Data = MaxValue });
-    }
-}
