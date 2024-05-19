@@ -8,7 +8,6 @@
 @using System.Collections.Generic
 @using BlazorInterview.Models
 @using BlazorInterview.Services
-@using Syncfusion.Blazor.DropDowns
 @inject DataService DataService
 
 <div>
@@ -104,14 +103,14 @@
             isUnderutilized.Append(averageUtilizationRate.Last() < 50 && peakUtilizationRate.Last() < 75);
         }
 
-        // console print all underutilized IPCs
+        @* // console print all underutilized IPCs
         for (int i = 0; i < IpcIDs.Count; i++)
         {
             if (isUnderutilized[i])
             {
                 Console.WriteLine("IPC " + IpcIDs[i] + " is underutilized.");
             }
-        }
+        } *@
 
         // create chart series
         Series = new List<ChartSeries>()

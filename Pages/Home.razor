@@ -8,6 +8,8 @@
 
 <h1>Hello, world!</h1>
 
+<p>Print out all CpuMHz of IPC with id ITLT4027: </p>
+
 @code {
     public List<IPCData> ipcData;
     string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
@@ -16,5 +18,10 @@
     {
         ipcData = await DataService.LoadDataAsync(csvFilePath);
         Console.WriteLine($"Loaded {ipcData.Count} IPC data entries.");
+        var itlt4027 = ipcData.Where(data => data.IPC.Trim().Equals("ITLT4027", StringComparison.OrdinalIgnoreCase)).ToList();
+        foreach (var data in itlt4027)
+        {
+            Console.WriteLine($"CpuMHz: {data.CpuMHz}");
+        }
     }
 }

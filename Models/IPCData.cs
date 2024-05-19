@@ -5,12 +5,12 @@ namespace BlazorInterview.Models
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     {
         public string IPC { get; set; }
-        public int DataFactory { get; set; } 
+        public int DataFactory { get; set; }
         public DateTime Time { get; set; }
-        public double AvgValue { get; set; } 
-        public double MinValue { get; set; } 
-        public double MaxValue { get; set; } 
-        public string MetricID { get; set; } 
+        public double AvgValue { get; set; }
+        public double MinValue { get; set; }
+        public double MaxValue { get; set; }
+        public string MetricID { get; set; }
         public int CpuMHz { get; set; } 
 
         // Calculated properties for utilization rates
