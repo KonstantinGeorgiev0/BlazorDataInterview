@@ -15,17 +15,8 @@
     <p>An IPC is considered underutilized if its average utilization rate is below 50% and its peak utilization rate is below 75%.</p>
     <p>Peak utilization is shown in blue and average utilization is shown in green.</p>
     <div style="margin: 10px;">
-        @* <MudSelect T="string" Label="IPC" @bind-bind-SelectedValue="@selectedIPC" AnchorOrigin="Origin.BottomCenter">
-            <MudSelectItem Value="@("Cappuccino")" />
-            <MudSelectItem Value="@("Cafe Latte")" />
-            <MudSelectItem Value="@("Espresso")" />
-        </MudSelect> *@
-        @* <SfDropDownList TValue="string" TItem="Games" Placeholder="Select a game" DataSource="@LocalData">
-            <DropDownListFieldSettings Value="ID" Text="Text"></DropDownListFieldSettings>
-            <DropDownListEvents TValue="string" TItem="Games" ValueChange="OnValueChange"></DropDownListEvents>
-        </SfDropDownList> *@
         <td>
-            <InputSelect id="IPC" @bind-Value="selectedIPC">
+            <InputSelect id="IPC" @bind-Value="selectedIPC" @onchange="OnIpcSelectionChange">
                 @foreach (var ipc in IpcList)
                 {
                     <option value="@ipc">@ipc</option>
@@ -62,65 +53,45 @@
     List<ChartSeries> Series = new List<ChartSeries>();
     string[] XAxisLabels = new string[0];
     int[] YAxisLabels = new int[0];
-    bool[] isUnderutilized = new bool[0];
     // create arrays to store utilization rates
-    double[] averageUtilizationRate = new double[0];
-    double[] peakUtilizationRate = new double[0];
+    public double[] AvgValue = new double[0];
+    public double[] MaxValue = new double[0];
     int maxCpuMHz = 0;
     string IpcID = "";
     List<string> IpcList = new List<string>();
-    private string selectedIPC { get; set; }
+    public string selectedIPC { get; set; }
+    string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
 
     protected override async Task OnInitializedAsync()
     {
         // load IPC data
-        listOfIpcData = await DataService.LoadDataAsync("sample-data/testcase_smart_applicator_V8.2_020823.zip.csv");
-        // extract distinct IPC IDs
-        var IpcIDs = listOfIpcData.Select(data => data.IPC).Distinct().ToList();
-        foreach (var ipcId in IpcIDs.Take(20))
-        {
-            IpcList.Add(ipcId);
-        }
-        // filter data for ITLT IPC
-        dataITLT = listOfIpcData
-            .Where(data => data.IPC.Trim().Equals("ITLT1504", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        // extract max and avg values
-        var maxValues = dataITLT.Select(data => data.MaxValue).ToArray();
-        var avgValues = dataITLT.Select(data => data.AvgValue).ToArray();
-        var maxCpuMHz = dataITLT.Select(data => data.CpuMHz).Max();
-        IpcID = dataITLT.Select(data => data.IPC).First();
+        listOfIpcData = await DataService.LoadDataAsync(csvFilePath);
+        // extract IPC IDs
+        IpcList = listOfIpcData.Select(data => data.IPC).Distinct().ToList();
+        // set default IPC
+        selectedIPC = IpcList[0];
+        // update visualization
+        await UpdateVisualizationAsync(selectedIPC);
+    }
 
-        foreach (var ipc in IpcIDs)
-        {
-            dataITLT = listOfIpcData
-                .Where(data => data.IPC.Trim().Equals(ipc, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-            // calculate utilization rates
-            averageUtilizationRate.Append(dataITLT.Average(data => data.AverageUtilizationRate));
-            peakUtilizationRate.Append(dataITLT.Average(data => data.PeakUtilizationRate));
-            // determine if IPC is underutilized
-            isUnderutilized.Append(averageUtilizationRate.Last() < 50 && peakUtilizationRate.Last() < 75);
-        }
+    private async Task OnIpcSelectionChange(ChangeEventArgs e)
+    {
+        selectedIPC = e.Value.ToString();
+        await UpdateVisualizationAsync(selectedIPC);
+    }
 
-        @* // console print all underutilized IPCs
-        for (int i = 0; i < IpcIDs.Count; i++)
-        {
-            if (isUnderutilized[i])
-            {
-                Console.WriteLine("IPC " + IpcIDs[i] + " is underutilized.");
-            }
-        } *@
+    private async Task UpdateVisualizationAsync(string selectedIPC)
+    {
+        // filter data for selected IPC
+        dataITLT = listOfIpcData.Where(data => data.IPC == selectedIPC).ToList();
+        // extract average and peak utilization rates
+        AvgValue = dataITLT.Select(data => data.AvgValue).ToArray();
+        MaxValue = dataITLT.Select(data => data.MaxValue).ToArray();
+        maxCpuMHz = dataITLT.Select(data => data.CpuMHz).Max();
 
-        // create chart series
-        Series = new List<ChartSeries>()
-        {
-            new ChartSeries() { Name = "MaxValue", Data = maxValues },
-            new ChartSeries() { Name = "AvgValue", Data = avgValues },
-        };
-        // create x-axis labels, show every second entry
-        XAxisLabels = dataITLT
-            .Select((data, index) => index % 2 == 0 ? data.Time.ToString("dd") : "")
-            .ToArray();
+        // update chart series
+        Series.Clear();
+        Series.Add(new ChartSeries { Name = "Average Utilization Rate", Data = AvgValue });
+        Series.Add(new ChartSeries { Name = "Peak Utilization Rate", Data = MaxValue });
     }
 }
