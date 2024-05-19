@@ -10,20 +10,39 @@
     <h1>Project Objective: Determine which Industrial PCs (IPCs) are to be downsized</h1>
 </div>
 
-<h3>An IPC is considered underutilized if its Average Utilization Rate is below 50% and its Peak Utilization Rate is below 75%.</h3>
+<h3>An IPC is considered underutilized if its Average Utilization Rate is below 25% and its Peak Utilization Rate is below 50%.</h3>
 
 <div>
     <p>There are a total of @(ipcData?.Count() ?? 0) data entries and @(IPCs?.Count() ?? 0) unique IPCs.</p>
+    <p>Underutilized IPCs:</p>
+    <ul>
+        @if (underutilizedIPCs != null)
+        {
+            @foreach (var ipc in underutilizedIPCs)
+            {
+                <li>@ipc</li>
+            }
+        }
+    </ul>
 </div>
 
 @code {
     public List<IPCData>? ipcData;
     public List<string>? IPCs;
     string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
+    public List<string>? underutilizedIPCs;
     
     protected override async Task OnInitializedAsync()
     {
         ipcData = await DataService.LoadDataAsync(csvFilePath);
         IPCs = ipcData.Select(data => data.IPC).Distinct().ToList();
+        // get all IPCs that are underutilized
+        var underutilizedIPCs = ipcData
+            .Where(data => 
+                data.AverageUtilizationRate < 10 && data.PeakUtilizationRate < 40)
+            .Select(data => data.IPC)
+            .Distinct()
+            .ToList();
+        Console.WriteLine($"Total number of underutilized IPCs: {underutilizedIPCs.Count()}");
     }
 }
