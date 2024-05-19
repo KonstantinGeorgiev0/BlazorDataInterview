@@ -17,11 +17,20 @@ namespace BlazorInterview.Models
         public double AverageUtilizationRate => AvgValue / CpuMHz * 100;
         public double PeakUtilizationRate => MaxValue / CpuMHz * 100;
 
-        public static int ParseCpuMHz(string cpuMHz)
+        public static int CleanCpuMHz(string cpuMHz)
         {
-            // Clean and parse the CpuMHz field
-            var cleanValue = cpuMHz.Split(' ').FirstOrDefault(v => int.TryParse(v, out _));
-            return int.TryParse(cleanValue, out int result) ? result : 0;
+            // Remove any non-numeric characters from the string
+            var cleanedCpuMHz = new string(cpuMHz.Where(char.IsDigit).ToArray());
+
+            // Parse the cleaned string into an integer
+            if (int.TryParse(cleanedCpuMHz, out int result))
+            {
+                return result;
+            }
+            else
+            {
+                return 0;
+            }
         }
     }
 }
