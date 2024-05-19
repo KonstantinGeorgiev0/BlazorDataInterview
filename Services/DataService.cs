@@ -38,6 +38,7 @@ namespace BlazorInterview.Services
                     {
                         csv.Context.RegisterClassMap<IPCDataMap>();
                         listOfIpcData = csv.GetRecords<IPCData>().ToList();
+                        NormalizeCpuMHz(listOfIpcData);
                     }
                 }
             }
@@ -47,6 +48,28 @@ namespace BlazorInterview.Services
                 Console.WriteLine($"An error occurred while loading data: {ex.Message}");
             }
             return listOfIpcData;
+        }
+        // normalize CpuMHz values
+        public void NormalizeCpuMHz(List<IPCData> ipcData)
+        {
+            // group the data by IPC
+            var groupedData = ipcData.GroupBy(d => d.IPC);
+
+            foreach (var group in groupedData)
+            {
+                // find the most frequent CpuMHz value for the IPC
+                var mostFrequentCpuMHz = group
+                    .GroupBy(d => d.CpuMHz)
+                    .OrderByDescending(d => d.Count())
+                    .First()
+                    .Key;
+
+                // update the CpuMHz value for each entry in the group
+                foreach (var entry in group)
+                {
+                    entry.CpuMHz = mostFrequentCpuMHz;
+                }
+            }
         }
     }
 }
