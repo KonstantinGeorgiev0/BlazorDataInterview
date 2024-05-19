@@ -24,7 +24,7 @@ namespace BlazorInterview.Services
                 var csvData = await _httpClient.GetStreamAsync(csvFilePath);
                 using (var reader = new StreamReader(csvData))
                 {
-                    var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                    var config = new CsvConfiguration(CultureInfo.GetCultureInfo("fr-FR"))
                     {
                         HasHeaderRecord = true,
                         HeaderValidated = null,
@@ -50,7 +50,7 @@ namespace BlazorInterview.Services
             return listOfIpcData;
         }
         // normalize CpuMHz values
-        public void NormalizeCpuMHz(List<IPCData> ipcData)
+        public static void NormalizeCpuMHz(List<IPCData> ipcData)
         {
             // group the data by IPC
             var groupedData = ipcData.GroupBy(d => d.IPC);
@@ -70,6 +70,16 @@ namespace BlazorInterview.Services
                     entry.CpuMHz = mostFrequentCpuMHz;
                 }
             }
+        }
+        public static bool CheckMetricIDs(List<IPCData> ipcDataList)
+        {
+            if (ipcDataList.Count == 0)
+            {
+                return false; 
+            }
+            // Check if all the entries have the same MetricID
+            var firstMetricID = ipcDataList[0].MetricID;
+            return ipcDataList.All(x => x.MetricID == firstMetricID);
         }
     }
 }

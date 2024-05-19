@@ -4,24 +4,26 @@
 @using BlazorInterview.Services
 @inject DataService DataService
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Smart Applicator</PageTitle>
 
-<h1>Hello, world!</h1>
+<div style="text-align: center;">
+    <h1>Project Objective: Determine which Industrial PCs (IPCs) are to be downsized</h1>
+</div>
 
-<p>Print out all CpuMHz of IPC with id ITLT4027: </p>
+<h3>An IPC is considered underutilized if its Average Utilization Rate is below 50% and its Peak Utilization Rate is below 75%.</h3>
+
+<div>
+    <p>There are a total of @(ipcData?.Count() ?? 0) data entries and @(IPCs?.Count() ?? 0) unique IPCs.</p>
+</div>
 
 @code {
-    public List<IPCData> ipcData;
+    public List<IPCData>? ipcData;
+    public List<string>? IPCs;
     string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
     
     protected override async Task OnInitializedAsync()
     {
         ipcData = await DataService.LoadDataAsync(csvFilePath);
-        Console.WriteLine($"Loaded {ipcData.Count} IPC data entries.");
-        var itlt4027 = ipcData.Where(data => data.IPC.Trim().Equals("ITLT4027", StringComparison.OrdinalIgnoreCase)).ToList();
-        foreach (var data in itlt4027)
-        {
-            Console.WriteLine($"CpuMHz: {data.CpuMHz}");
-        }
+        IPCs = ipcData.Select(data => data.IPC).Distinct().ToList();
     }
 }
