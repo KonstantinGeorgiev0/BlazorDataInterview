@@ -16,7 +16,7 @@ namespace BlazorInterview.Models
             Map(m => m.MinValue).Name("MinValue");
             Map(m => m.MaxValue).Name("MaxValue");
             Map(m => m.MetricID).Name("MetricId");
-            Map(m => m.CpuMHz).Name("CpuMHz").Convert(args => IPCData.ParseCpuMHz(args.Row.GetField("CpuMHz")));
+            Map(m => m.CpuMHz).Name("CpuMHz").Convert(args => IPCData.CleanCpuMHz(args.Row.GetField("CpuMHz")));
         }
     }
 }
