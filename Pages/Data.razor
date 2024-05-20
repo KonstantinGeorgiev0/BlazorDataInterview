@@ -1,0 +1,78 @@
+@page "/data"
+@using MudBlazor
+@using MudBlazor.Charts
+@using BlazorInterview.Models
+@using BlazorInterview.Services
+@inject DataService DataService
+
+<div>
+    <p>Line Chart showcasing Industrial PC (IPC) with ID @IpcID</p>
+    <p>An IPC is considered underutilized if its average utilization rate is below 50% and its peak utilization rate is below 75%.</p>
+    <p>Peak utilization is shown in blue and average utilization is shown in green.</p>
+    <p>Maximum CPU MHz: @maxCpuMHz</p>
+    @* <p>Average Utilization Rate: @averageUtilizationRate.ToString("F2")%</p>
+    <p>Peak Utilization Rate: @peakUtilizationRate.ToString("F2")%</p>
+    @if (isUnderutilized)
+    {
+        <p style="color: green;">This IPC is underutilized.</p>
+    }
+    else
+    {
+        <p style="color: red;">This IPC is not underutilized.</p>
+    } *@
+</div>
+<div>
+    <MudChart ChartType="MudBlazor.ChartType.Line" ChartSeries="@Series" @bind-SelectedIndex="Index" XAxisLabels="@XAxisLabels" Width="800" Height="350" ChartOptions="@Options"/>
+</div>
+
+@code 
+{
+    private string IpcID = "";
+    private int maxCpuMHz = 0;
+    private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
+    private bool isUnderutilized = false;
+    private List<ChartSeries> Series = new List<ChartSeries>();
+    private string[] XAxisLabels = [];
+    private int Index = -1;
+    private ChartOptions Options = new ChartOptions();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var data = await DataService.LoadDataAsync(csvFilePath);
+        @* var dataCpuMHz = data.Where(x => x.IPC.Trim().Equals("ITLT4301")).ToList(); *@
+        @* var dataCpuMHz = data.Where(x => x.CpuMHz).ToList();  *@
+        @* var maxAvgValue = dataCpuMHz.Max(x => x.AvgValue); *@
+        var maxAvgValue = data.Select(d => d.AvgValue).Max();
+        var maxMaxValue = data.Max(x => x.MaxValue);
+        Console.WriteLine($"Max Avg Value: {maxAvgValue}");
+        Console.WriteLine($"Max Max Value: {maxMaxValue}");
+        var ipcs = data.Select(d => d.IPC).Distinct().ToList();
+        var ITLT3697 = data.Where(x => x.IPC.Trim().Equals("ITLT3697")).ToList();
+        var ITLT3697CpuMHz = ITLT3697.Select(x => x.CpuMHz).ToList();
+        Console.WriteLine($"CpuMHz values of ITLT3697: {string.Join(", ", ITLT3697CpuMHz)}");
+        Console.WriteLine($"IPCs: {ipcs.Count}");
+        // print all IPCs that have average of their avgValue and maxValue at least 2 times their CpuMHz
+        @* foreach (var ipc in ipcs)
+        {
+            var ipcData = data.Where(d => d.IPC == ipc).ToList();
+            var avgValue = ipcData.Select(d => d.AvgValue).Average();
+            var maxValue = ipcData.Select(d => d.MaxValue).Average();
+            if (avgValue >= 2 * ipcData.First().CpuMHz && maxValue >= 2 * ipcData.First().CpuMHz)
+            {
+                Console.WriteLine($"IPC {ipc} has avgValue {avgValue} and maxValue {maxValue}");
+            }
+        } *@
+        Series.Clear();
+        @* Series.Add(new ChartSeries { Name = "Peak Utilization", Data = dataCpuMHz.Select(d => d.MaxValue).ToArray() });
+        Series.Add(new ChartSeries { Name = "Average Utilization", Data = dataCpuMHz.Select(d => d.AvgValue).ToArray() }); *@
+        // create x-axis labels, show every second entry
+        XAxisLabels = data
+            .Select((data, index) => index % 2 == 0 ? data.Time.ToString("dd") : "")
+            .ToArray();
+    }
+}
