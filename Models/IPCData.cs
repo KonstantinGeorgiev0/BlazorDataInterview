@@ -19,18 +19,15 @@ namespace BlazorInterview.Models
 
         public static int CleanCpuMHz(string cpuMHz)
         {
-            // Remove any non-numeric characters from the string
-            var cleanedCpuMHz = new string(cpuMHz.Where(char.IsDigit).ToArray());
-
-            // Parse the cleaned string into an integer
-            if (int.TryParse(cleanedCpuMHz, out int result))
-            {
-                return result;
-            }
-            else
-            {
-                return 0;
-            }
+            // If white space is encountered, remove everything after it
+            var cleanedCpuMHz = cpuMHz.Split()[0];
+            return int.Parse(cleanedCpuMHz);
+        }
+        // if value is 2 times larger than the maxCpuMHz, remove it
+        public static double CleanValues(double value, double maxCpuMHz)
+        {
+            // if value is 2 times larger than the maxCpuMHz, remove it
+            return value < 2 * maxCpuMHz ? value : 0;
         }
     }
 }
