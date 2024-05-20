@@ -2,20 +2,30 @@ using BlazorInterview.Models;
 using CsvHelper;
 using CsvHelper.Configuration;
 using System.Globalization;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 
 namespace BlazorInterview.Services
 {
+    /// <summary>
+    /// Service class for loading and manipulating IPCData.
+    /// </summary>
     public class DataService
     {
         private readonly HttpClient _httpClient;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DataService"/> class.
+        /// </summary>
+        /// <param name="httpClient">The HttpClient instance used for making HTTP requests.</param>
         public DataService(HttpClient httpClient)
         {
             _httpClient = httpClient;
         }
 
+        /// <summary>
+        /// Loads the IPCData from a CSV file asynchronously.
+        /// </summary>
+        /// <param name="csvFilePath">The path to the CSV file.</param>
+        /// <returns>A list of IPCData objects.</returns>
         public async Task<List<IPCData>> LoadDataAsync(string csvFilePath)
         {
             List<IPCData> listOfIpcData = [];
@@ -47,55 +57,11 @@ namespace BlazorInterview.Services
             }
             return listOfIpcData;
         }
-        // clean data by removing outliers
-        public static void CleanData(List<IPCData> ipcData)
-        {
-            var groupedData = ipcData.GroupBy(d => d.IPC);
 
-            foreach (var group in groupedData)
-            {
-                var avgValue = group.Average(d => d.AvgValue);
-                var q1 = group.OrderBy(d => d.AvgValue).ElementAt((int)(group.Count() * 0.25));
-                var q3 = group.OrderByDescending(d => d.AvgValue).ElementAt((int)(group.Count() * 0.75));
-
-                var iqr = q3.AvgValue - q1.AvgValue;
-                var lowerBound = q1.AvgValue - 1.5 * iqr;
-                var upperBound = q3.AvgValue + 1.5 * iqr;
-
-                var cleanedData = group.Where(d => d.AvgValue >= lowerBound && d.AvgValue <= upperBound).ToList();
-
-                ipcData.RemoveAll(d => d.IPC == group.Key);
-                ipcData.AddRange(cleanedData);
-            }
-        }
-
-        private static List<IPCData> RemoveOutliers(List<IPCData> data, Func<IPCData, double> selector)
-        {
-            // var values = data.Select(selector).ToList();
-            // var mean = values.Average();
-            // Console.WriteLine($"Mean: {mean}");
-            // var stdDev = Math.Sqrt(values.Average(v => Math.Pow(v - mean, 2)));
-            // Console.WriteLine($"Standard Deviation: {stdDev}");
-
-            // // Define threshold for outlier
-            // double threshold = 3.0; // Typical threshold for Z-score
-
-            // return data.Where(d => Math.Abs(selector(d) - mean) / stdDev <= threshold).ToList();
-
-            // group by IPC
-            var groupedData = data.GroupBy(d => d.IPC);
-            foreach (var group in groupedData)
-            {
-                var maxCpuMHz = group.Select(d => d.CpuMHz).Max();
-                var values = group.Select(selector).ToList();
-                // if a value is larger than 2 * maxCpuMHz, remove it
-                var cleanedData = group.Where(d => selector(d) <= 2 * maxCpuMHz).ToList();
-                data.RemoveAll(d => d.IPC == group.Key);
-                data.AddRange(cleanedData);
-            }
-            return data;
-        }
-        // normalize CpuMHz values
+        /// <summary>
+        /// Normalizes the CpuMHz values for each IPCData object in the list.
+        /// </summary>
+        /// <param name="ipcData">The list of IPCData objects.</param>
         public static void NormalizeCpuMHz(List<IPCData> ipcData)
         {
             // group the data by IPC
@@ -117,6 +83,12 @@ namespace BlazorInterview.Services
                 }
             }
         }
+
+        /// <summary>
+        /// Checks if all the IPCData objects in the list have the same MetricID.
+        /// </summary>
+        /// <param name="ipcDataList">The list of IPCData objects.</param>
+        /// <returns>True if all the entries have the same MetricID, otherwise false.</returns>
         public static bool CheckMetricIDs(List<IPCData> ipcDataList)
         {
             if (ipcDataList.Count == 0)

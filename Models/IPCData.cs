@@ -1,8 +1,6 @@
 namespace BlazorInterview.Models
 {
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public class IPCData()
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     {
         public string IPC { get; set; }
         public int DataFactory { get; set; }
@@ -26,7 +24,6 @@ namespace BlazorInterview.Models
         // if value is 2 times larger than the maxCpuMHz, remove it
         public static double CleanValues(double value, double maxCpuMHz)
         {
-            // if value is 2 times larger than the maxCpuMHz, remove it
             return value < 2 * maxCpuMHz ? value : 0;
         }
     }
