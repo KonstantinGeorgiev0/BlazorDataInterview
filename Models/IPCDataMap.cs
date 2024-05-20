@@ -12,9 +12,9 @@ namespace BlazorInterview.Models
             Map(m => m.IPC).Name("IPC");
             Map(m => m.DataFactory).Name("Data Factory");
             Map(m => m.Time).Name("time").TypeConverterOption.Format("dd/MM/yyyy");
-            Map(m => m.AvgValue).Name("AvgValue");
-            Map(m => m.MinValue).Name("MinValue");
-            Map(m => m.MaxValue).Name("MaxValue");
+            Map(m => m.AvgValue).Name("AvgValue").Convert(args => IPCData.CleanValues(args.Row.GetField<double>("AvgValue"), IPCData.CleanCpuMHz(args.Row.GetField("CpuMHz"))));
+            Map(m => m.MinValue).Name("MinValue").Convert(args => IPCData.CleanValues(args.Row.GetField<double>("MinValue"), IPCData.CleanCpuMHz(args.Row.GetField("CpuMHz"))));
+            Map(m => m.MaxValue).Name("MaxValue").Convert(args => IPCData.CleanValues(args.Row.GetField<double>("MaxValue"), IPCData.CleanCpuMHz(args.Row.GetField("CpuMHz"))));
             Map(m => m.MetricID).Name("MetricId");
             Map(m => m.CpuMHz).Name("CpuMHz").Convert(args => IPCData.CleanCpuMHz(args.Row.GetField("CpuMHz")));
         }
