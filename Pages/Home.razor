@@ -36,6 +36,7 @@
     {
         ipcData = await DataService.LoadDataAsync(csvFilePath);
         IPCs = ipcData.Select(data => data.IPC).Distinct().ToList();
+        Console.WriteLine($"Total number of unique IPCs: {IPCs.Count()}");
         // get all IPCs that are underutilized
         var underutilizedIPCs = ipcData
             .Where(data => 

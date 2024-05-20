@@ -1,4 +1,4 @@
-﻿@page "/visualization"
+﻿@* @page "/visualization"
 @using MudBlazor.Charts
 @using MudBlazor
 @using System;
@@ -9,43 +9,31 @@
 @using BlazorInterview.Models
 @using BlazorInterview.Services
 @using BlazorInterview.Pages
+@using Syncfusion.Blazor.DropDowns
 @inject DataService DataService
 
+
 <div>
-    <p>Line Chart showcasing Industrial PC (IPC) with ID @IpcID</p>
-    <p>An IPC is considered underutilized if its average utilization rate is below 50% and its peak utilization rate is below 75%.</p>
-    <p>Peak utilization is shown in blue and average utilization is shown in green.</p>
-    <div style="margin: 10px;">
-        <td>
-            <InputSelect id="IPC" @bind-Value="selectedIPC" @onchange="OnIpcSelectionChange">
-                @foreach (var ipc in IpcList)
-                {
-                    <option value="@ipc">@ipc</option>
-                }
-            </InputSelect>
-        </td>
-    </div>
-    <p>Maximum CPU MHz: @maxCpuMHz</p>
-    @* <p>Average Utilization Rate: @averageUtilizationRate.ToString("F2")%</p>
-    <p>Peak Utilization Rate: @peakUtilizationRate.ToString("F2")%</p>
-    @if (isUnderutilized)
+    <SfDropDownList Placeholder="e.g. Australia" TItem="Countries" TValue="string">
+        <SfDataManager Json=@Country></SfDataManager>
+        <DropDownListFieldSettings Value="Name"></DropDownListFieldSettings>
+    </SfDropDownList>
+</div>
+@code{
+    public class Countries
     {
-        <p style="color: green;">This IPC is underutilized.</p>
+        public string Name { get; set; }
+
+        public string Code { get; set; }
     }
-    else
+
+    public Countries[] Country = new Countries[]
     {
-        <p style="color: red;">This IPC is not underutilized.</p>
-    } *@
-</div>
-<div>
-    <MudChart ChartType="MudBlazor.ChartType.Line" ChartSeries="@Series" @bind-SelectedIndex="Index" XAxisLabels="@XAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
-    <MudGrid>
-        <MudItem xs="6">
-            <MudSlider @bind-Value="Options.LineStrokeWidth" Min="1" Max="10" Color="Color.Info">Line Width: @Options.LineStrokeWidth.ToString()</MudSlider>
-        </MudItem>
-    </MudGrid>
+        new Countries { Name = "Australia", Code = "AU" },
+        new Countries { Name = "Bermuda", Code = "BM" },
+        new Countries { Name = "Canada", Code = "CA" },
+        new Countries { Name = "Cameroon", Code = "CM" }
+    };
+}
 
-    <MudChart ChartType="MudBlazor.ChartType.Line" ChartSeries="@Series2" @bind-SelectedIndex="Index" XAxisLabels="@XAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
-</div>
-
-
+ *@
