@@ -39,7 +39,7 @@
         // get all IPCs that are underutilized
         var underutilizedIPCs = ipcData
             .Where(data => 
-                data.AverageUtilizationRate < 10 && data.PeakUtilizationRate < 40)
+                data.AverageUtilizationRate < 10 && data.PeakUtilizationRate < 20)
             .Select(data => data.IPC)
             .Distinct()
             .ToList();
