@@ -2,6 +2,7 @@ using BlazorInterview.Models;
 using CsvHelper;
 using CsvHelper.Configuration;
 using System.Globalization;
+using System.Security.Cryptography.X509Certificates;
 
 namespace BlazorInterview.Services
 {
@@ -48,6 +49,9 @@ namespace BlazorInterview.Services
                 using CsvReader csv = new(reader, config);
                 csv.Context.RegisterClassMap<IPCDataMap>();
                 listOfIpcData = csv.GetRecords<IPCData>().ToList();
+                if (CheckForMissingData(listOfIpcData)) {
+                    throw new Exception("Missing data in the CSV file.");
+                } 
                 NormalizeCpuMHz(listOfIpcData);
             }
             catch (Exception ex)
@@ -56,6 +60,17 @@ namespace BlazorInterview.Services
                 Console.WriteLine($"An error occurred while loading data: {ex.Message}");
             }
             return listOfIpcData;
+        }
+
+        // check for missing data
+        public static bool CheckForMissingData(List<IPCData> ipcData)
+        {
+            // Check if any of the entries have missing data
+            return ipcData.Any(
+                x => string.IsNullOrEmpty(x.IPC) || x.DataFactory == 0 ||
+                x.CpuMHz == 0 || string.IsNullOrEmpty(x.MetricID) || 
+                x.AvgValue == 0 || x.MaxValue == 0 || x.MinValue == 0 
+            ); 
         }
 
         /// <summary>
