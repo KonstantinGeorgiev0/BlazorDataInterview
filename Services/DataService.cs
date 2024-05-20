@@ -49,6 +49,7 @@ namespace BlazorInterview.Services
                 using CsvReader csv = new(reader, config);
                 csv.Context.RegisterClassMap<IPCDataMap>();
                 listOfIpcData = csv.GetRecords<IPCData>().ToList();
+                listOfIpcData = RemoveMissingData(listOfIpcData);
                 if (CheckForMissingData(listOfIpcData)) {
                     throw new Exception("Missing data in the CSV file.");
                 } 
@@ -62,15 +63,40 @@ namespace BlazorInterview.Services
             return listOfIpcData;
         }
 
-        // check for missing data
+        /// <summary>
+        /// Checks if any of the IPCData objects in the list have missing data.
+        /// </summary>
         public static bool CheckForMissingData(List<IPCData> ipcData)
         {
-            // Check if any of the entries have missing data
-            return ipcData.Any(
-                x => string.IsNullOrEmpty(x.IPC) || x.DataFactory == 0 ||
-                x.CpuMHz == 0 || string.IsNullOrEmpty(x.MetricID) || 
-                x.AvgValue == 0 || x.MaxValue == 0 || x.MinValue == 0 
-            ); 
+            return ipcData.Any(x =>
+                string.IsNullOrEmpty(x.IPC) ||
+                x.DataFactory <= 0 ||
+                x.CpuMHz <= 0 ||
+                string.IsNullOrEmpty(x.MetricID) ||
+                x.AvgValue <= 0 ||
+                x.MaxValue <= 0 ||
+                x.MinValue <= 0
+            );
+        }
+        
+        /// <summary>
+        /// Removes IPCData objects with missing data from the list.
+        /// </summary>
+        public static List<IPCData> RemoveMissingData(List<IPCData> ipcData)
+        {
+            // Check if any of the entries have missing data and if so, remove them
+            // Remove invalid rows
+            var listOfIpcData = ipcData.Where(x =>
+                !string.IsNullOrEmpty(x.IPC) &&
+                x.DataFactory > 0 &&
+                x.CpuMHz > 0 &&
+                !string.IsNullOrEmpty(x.MetricID) &&
+                x.AvgValue > 0 &&
+                x.MaxValue > 0 &&
+                x.MinValue > 0
+            ).ToList();
+
+            return listOfIpcData;
         }
 
         /// <summary>
