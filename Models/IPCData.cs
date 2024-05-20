@@ -24,7 +24,7 @@ namespace BlazorInterview.Models
         // if value is 2 times larger than the maxCpuMHz, remove it
         public static double CleanValues(double value, double maxCpuMHz)
         {
-            return value < 2 * maxCpuMHz ? value : 0;
+            return value <= maxCpuMHz ? value : 0;
         }
     }
 }
