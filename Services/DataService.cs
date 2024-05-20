@@ -2,7 +2,6 @@ using BlazorInterview.Models;
 using CsvHelper;
 using CsvHelper.Configuration;
 using System.Globalization;
-using System.Security.Cryptography.X509Certificates;
 
 namespace BlazorInterview.Services
 {
@@ -49,11 +48,16 @@ namespace BlazorInterview.Services
                 using CsvReader csv = new(reader, config);
                 csv.Context.RegisterClassMap<IPCDataMap>();
                 listOfIpcData = csv.GetRecords<IPCData>().ToList();
+                NormalizeCpuMHz(listOfIpcData);
+                // var uniqueIPCs = listOfIpcData.Select(x => x.IPC).Distinct().ToList();
+                // Console.WriteLine($"Unique IPCs: {uniqueIPCs.Count}");
                 listOfIpcData = RemoveMissingData(listOfIpcData);
+                // var uniqueIPCsAfter = listOfIpcData.Select(d => d.IPC).Distinct().ToList();
+                // Console.WriteLine($"Unique IPCs after: {uniqueIPCsAfter.Count}");
+                // find the unique IPCs that were removed
                 if (CheckForMissingData(listOfIpcData)) {
                     throw new Exception("Missing data in the CSV file.");
                 } 
-                NormalizeCpuMHz(listOfIpcData);
             }
             catch (Exception ex)
             {
@@ -78,15 +82,15 @@ namespace BlazorInterview.Services
                 x.MinValue <= 0
             );
         }
-        
+
         /// <summary>
         /// Removes IPCData objects with missing data from the list.
         /// </summary>
         public static List<IPCData> RemoveMissingData(List<IPCData> ipcData)
         {
+            var originalData = new List<IPCData>(ipcData);
             // Check if any of the entries have missing data and if so, remove them
-            // Remove invalid rows
-            var listOfIpcData = ipcData.Where(x =>
+            var cleanedData = ipcData.Where(x =>
                 !string.IsNullOrEmpty(x.IPC) &&
                 x.DataFactory > 0 &&
                 x.CpuMHz > 0 &&
@@ -96,11 +100,15 @@ namespace BlazorInterview.Services
                 x.MinValue > 0
             ).ToList();
 
-            return listOfIpcData;
+            // var removedIPCs = originalData.Except(cleanedData).Select(x => x.IPC).Distinct().ToList();
+            // Console.WriteLine($"Removed IPCs: {string.Join(", ", removedIPCs)}");
+
+            return cleanedData;
         }
 
         /// <summary>
-        /// Normalizes the CpuMHz values for each IPCData object in the list.
+        /// Normalizes the CpuMHz values for each IPCData object in the list. 
+        /// Take the most frequent CpuMHz value for each IPC and set it for all entries with that IPC. 
         /// </summary>
         /// <param name="ipcData">The list of IPCData objects.</param>
         public static void NormalizeCpuMHz(List<IPCData> ipcData)
