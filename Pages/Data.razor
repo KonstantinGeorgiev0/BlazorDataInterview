@@ -6,85 +6,138 @@
 @inject DataService DataService
 
 <div>
-    <p>Line Chart showcasing Industrial PC (IPC) with ID @IpcID</p>
+    <p>Line Chart showcasing Industrial PC (IPC)</p>
     <p>An IPC is considered underutilized if its average utilization rate is below 50% and its peak utilization rate is below 75%.</p>
     <p>Peak utilization is shown in blue and average utilization is shown in green.</p>
-    <p>Maximum CPU MHz: @maxCpuMHz</p>
-    @* <p>Average Utilization Rate: @averageUtilizationRate.ToString("F2")%</p>
-    <p>Peak Utilization Rate: @peakUtilizationRate.ToString("F2")%</p>
-    @if (isUnderutilized)
-    {
-        <p style="color: green;">This IPC is underutilized.</p>
-    }
-    else
-    {
-        <p style="color: red;">This IPC is not underutilized.</p>
-    } *@
 </div>
-<div>
-    <MudChart 
-        ChartType="MudBlazor.ChartType.Line" 
-        ChartSeries="@Series" 
-        @bind-SelectedIndex="Index" 
-        XAxisLabels="@XAxisLabels" 
-        Width="800" Height="350" 
-        ChartOptions="@Options"/>
-</div>
+@foreach (var cpuMHzData in chartDataByCpuMHz)
+{
+    <div>
+        <div>
+            <p>Grouped Data based on Maximum CPU MHz: @cpuMHzData.Key (average of values is taken for each day)</p>
+            <p>Average Utilization Rate: @cpuMHzData.Value.AverageUtilizationRate%</p>
+            <p>Peak Utilization Rate: @cpuMHzData.Value.PeakUtilizationRate%</p>
+            @if (cpuMHzData.Value.IsUnderutilized)
+            {
+                <p style="color: green;">This IPC is underutilized.</p>
+            }
+            else
+            {
+                <p style="color: red;">This IPC is not underutilized.</p>
+            }
+        </div>
+        <MudChart 
+            ChartType="MudBlazor.ChartType.Line" 
+            ChartSeries="@cpuMHzData.Value.Series" 
+            @bind-SelectedIndex="Index" 
+            XAxisLabels="@cpuMHzData.Value.XAxisLabels" 
+            Width="100%" Height="350" 
+            ChartOptions="@Options"/>
+    </div>
+}
 
 @code 
 {
-    private string IpcID = "";
-    private int maxCpuMHz = 0;
-    private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
-    private bool isUnderutilized = false;
+    // variables for line chart
     private List<ChartSeries> Series = new List<ChartSeries>();
     private string[] XAxisLabels = [];
     private int Index = -1;
     private ChartOptions Options = new ChartOptions();
+    private Dictionary<int, ChartData> chartDataByCpuMHz = new Dictionary<int, ChartData>();
+
+    // variables for data
+    private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
+    private List<IPCData> IPCData = new List<IPCData>();
+    private List<IPCData> selectedData = new List<IPCData>();
+    @* private double[] maxValues = new double[] { };
+    private double[] avgValues = new double[] { }; *@
+    @* private string IpcID = ""; *@
+    @* private int maxCpuMHz = 0; *@
+    @* private bool isUnderutilized = false; *@
+
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        @* LoadChart(selectedData); *@
     }
 
     private async Task LoadData()
     {
-        var data = await DataService.LoadDataAsync(csvFilePath);
-        // group data by value of CPU MHz
-        var dataCpuMHz = data
+        IPCData = await DataService.LoadDataAsync(csvFilePath);
+        // group data by value of CPU MHz, then by date, and take averages of avg and max Values for each day
+       var groupedData = IPCData
             .GroupBy(d => d.CpuMHz)
-            .Select(g => new
-            {
-                CpuMHz = g.Key,
-                AvgValue = g.Average(d => d.AverageUtilizationRate),
-                MaxValue = g.Max(d => d.PeakUtilizationRate)
-            })
+            .SelectMany(cpuGroup => 
+                cpuGroup.GroupBy(g => g.Time.Date)
+                    .Select(dateGroup => new IPCData
+                    {
+                        Time = dateGroup.Key,
+                        AvgValue = dateGroup.Average(d => d.AvgValue),
+                        MaxValue = dateGroup.Average(d => d.MaxValue),
+                        CpuMHz = cpuGroup.Key
+                    })
+            )
             .ToList();
-        var dataCpuMHzValue = data
-            .Where(d => d.CpuMHz == 9600);
-        var maxValues = dataCpuMHzValue.Select(d => d.MaxValue).ToList();
-        var avgValues = dataCpuMHzValue.Select(d => d.AvgValue).ToList();
+
+        var selectedCpuMHzValues = groupedData.Select(d => d.CpuMHz).Distinct().ToList();
+        Console.WriteLine($"Total number of distinct CpuMHz values: {selectedCpuMHzValues.Count()}");
+        var selectedCpuMHz = groupedData.Select(d => d.CpuMHz).Distinct().FirstOrDefault();
+        Console.WriteLine($"Selected CpuMHz: {selectedCpuMHz}");
+
+        @* selectedData = groupedData.Where(d => d.CpuMHz == selectedCpuMHz).ToList(); *@
+        @* maxValues = selectedData.Select(d => d.MaxValue).ToArray();
+        avgValues = selectedData.Select(d => d.AvgValue).ToArray(); *@
         // get the maximum CPU MHz value
-        maxCpuMHz = dataCpuMHzValue.Max(d => d.CpuMHz);
+        @* maxCpuMHz = selectedData.Max(d => d.CpuMHz); *@
+        foreach (var cpuMHz in selectedCpuMHzValues)
+        {
+            var dataCpuMhz = groupedData.Where(d => d.CpuMHz == cpuMHz).ToList();
+            var maxValues = dataCpuMhz.Select(d => d.MaxValue).ToArray();
+            var avgValues = dataCpuMhz.Select(d => d.AvgValue).ToArray();
+            var averageUtilizationRate = Math.Round(avgValues.Average() / cpuMHz * 100, 2);
+            var peakUtilizationRate = Math.Round(maxValues.Max() / cpuMHz * 100, 2);
+            var isUnderutilized = averageUtilizationRate < 5 && peakUtilizationRate < 15;
+
+            var ChartSeries = new List<ChartSeries>
+                {
+                    new ChartSeries { Name = "Peak Utilization", Data = maxValues },
+                    new ChartSeries { Name = "Average Utilization", Data = avgValues }
+                };
+
+            var XAxisLabels = dataCpuMhz
+                .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
+                .ToArray();
+
+            chartDataByCpuMHz
+                .Add(cpuMHz, new ChartData 
+                    { 
+                        Series = ChartSeries, 
+                        XAxisLabels = XAxisLabels,
+                        AverageUtilizationRate = averageUtilizationRate,
+                        PeakUtilizationRate = peakUtilizationRate,
+                        IsUnderutilized = isUnderutilized    
+                    }
+                );
+        }
+    }
+    @* private void LoadChart(List<IPCData> data)
+    {
+        // clear the series and add new data
         Series.Clear();
-        Series.Add(new ChartSeries { Name = "Peak Utilization", Data = dataCpuMHzValue.Select(d => d.MaxValue).ToArray() });
-        Series.Add(new ChartSeries { Name = "Average Utilization", Data = dataCpuMHzValue.Select(d => d.AvgValue).ToArray() });
+        Series.Add(new ChartSeries { Name = "Peak Utilization", Data = maxValues });
+        Series.Add(new ChartSeries { Name = "Average Utilization", Data = avgValues });
         // create x-axis labels, show every second entry
         XAxisLabels = data
-            .Select((data, index) => index % 2 == 0 ? data.Time.ToString("dd") : "")
+            .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
             .ToArray();
+    } *@
+    private class ChartData
+    {
+        public List<ChartSeries> Series { get; set; }
+        public string[] XAxisLabels { get; set; }
+        public double AverageUtilizationRate { get; set; }
+        public double PeakUtilizationRate { get; set; }
+        public bool IsUnderutilized { get; set; }
     }
-    public List<IPCData> GetDailyAverages(List<IPCData> data)
-        {
-            return data
-                .GroupBy(d => d.Time)
-                .Select(g => new IPCData
-                {
-                    Time = g.Key,
-                    AvgValue = g.Average(d => d.AvgValue),
-                    MaxValue = g.Average(d => d.MaxValue),
-                    CpuMHz = g.First().CpuMHz
-                })
-                .ToList();
-        }
 }
