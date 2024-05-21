@@ -9,8 +9,43 @@
     <p>Line Chart showcasing Industrial PC (IPC)</p>
     <p>An IPC is considered underutilized if its average utilization rate is below 50% and its peak utilization rate is below 75%.</p>
     <p>Peak utilization is shown in blue and average utilization is shown in green.</p>
+    <div style="margin: 10px;">
+        <p>Choose a CpuMHz value that you would like to see the chart of</p>
+        <InputSelect id="CPU" @bind-Value="selectedCpuMHz" @onchange="OnCpuSelectionChange">
+            @foreach (var cpu in CpuMHzValues)
+            {
+                <option value="@cpu">@cpu</option>
+            }
+        </InputSelect>
+    </div>
 </div>
-@foreach (var cpuMHzData in chartDataByCpuMHz)
+@if (chartDataByCpuMHz.ContainsKey(selectedCpuMHz))
+{
+    var cpuMHzData = chartDataByCpuMHz[selectedCpuMHz];
+    <div>
+        <div>
+            <p>Grouped Data based on Maximum CPU MHz: @selectedCpuMHz (average of values is taken for each day)</p>
+            <p>Average Utilization Rate: @cpuMHzData.AverageUtilizationRate%</p>
+            <p>Peak Utilization Rate: @cpuMHzData.PeakUtilizationRate%</p>
+            @if (cpuMHzData.IsUnderutilized)
+            {
+                <p style="color: green;">This IPC is underutilized.</p>
+            }
+            else
+            {
+                <p style="color: red;">This IPC is not underutilized.</p>
+            }
+        </div>
+        <MudChart 
+            ChartType="MudBlazor.ChartType.Line" 
+            ChartSeries="@cpuMHzData.Series" 
+            @bind-SelectedIndex="Index" 
+            XAxisLabels="@cpuMHzData.XAxisLabels" 
+            Width="100%" Height="350" 
+            ChartOptions="@Options"/>
+    </div>
+}
+@* @foreach (var cpuMHzData in chartDataByCpuMHz)
 {
     <div>
         <div>
@@ -34,13 +69,13 @@
             Width="100%" Height="350" 
             ChartOptions="@Options"/>
     </div>
-}
+} *@
 
 @code 
 {
     // variables for line chart
     private List<ChartSeries> Series = new List<ChartSeries>();
-    private string[] XAxisLabels = [];
+    private string[] XAxisLabels = Array.Empty<string>();
     private int Index = -1;
     private ChartOptions Options = new ChartOptions();
     private Dictionary<int, ChartData> chartDataByCpuMHz = new Dictionary<int, ChartData>();
@@ -49,6 +84,15 @@
     private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
     private List<IPCData> IPCData = new List<IPCData>();
     private List<IPCData> selectedData = new List<IPCData>();
+
+    // variables for input select
+    public int selectedCpuMHz { get; set; }
+    private List<int> CpuMHzValues = new List<int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
 
     private async Task LoadData()
     {
@@ -73,6 +117,7 @@
 
         foreach (var cpuMHz in selectedCpuMHzValues)
         {
+            CpuMHzValues.Add(cpuMHz);
             var dataCpuMhz = groupedData.Where(d => d.CpuMHz == cpuMHz).ToList();
             var maxValues = dataCpuMhz.Select(d => d.MaxValue).ToArray();
             var avgValues = dataCpuMhz.Select(d => d.AvgValue).ToArray();
@@ -101,6 +146,7 @@
                     }
                 );
         }
+        selectedCpuMHz = CpuMHzValues.FirstOrDefault(); // set initial selected value
     }
     @* private void LoadChart(List<IPCData> data)
     {
@@ -120,5 +166,10 @@
         public double AverageUtilizationRate { get; set; }
         public double PeakUtilizationRate { get; set; }
         public bool IsUnderutilized { get; set; }
+    }
+    private void OnCpuSelectionChange(ChangeEventArgs e)
+    {
+        selectedCpuMHz = int.Parse(e.Value.ToString());
+        StateHasChanged();
     }
 }
