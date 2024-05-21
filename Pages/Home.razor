@@ -10,11 +10,14 @@
     <h1>Project Objective: Determine which Industrial PCs (IPCs) are to be downsized</h1>
 </div>
 
-<h3>An IPC is considered underutilized if its Average Utilization Rate is below 25% and its Peak Utilization Rate is below 50%.</h3>
+<h3>An IPC is considered underutilized if its Average Utilization Rate is below @averageUtilizationRateThreshold% and its Peak Utilization Rate is below @peakUtilizationRateThreshold%.</h3>
+
+<InputNumber @bind-Value="averageUtilizationRateThreshold" @onchange="AvgChange" Label="Average Utilization Rate Threshold" Min="0" Max="100" Step="1" />
+<InputNumber @bind-Value="peakUtilizationRateThreshold" @onchange="PeakChange" Label="Peak Utilization Rate Threshold" Min="0" Max="100" Step="1" />
 
 <div>
     <p>There are a total of @(ipcData?.Count() ?? 0) data entries and @(IPCs?.Count() ?? 0) unique IPCs.</p>
-    <p>Underutilized IPCs:</p>
+    <p>Underutilized IPCs number @(underutilizedIPCs?.Count() ?? 0):</p>
     <ul>
         @if (underutilizedIPCs != null)
         {
@@ -30,20 +33,42 @@
     public List<IPCData> ipcData;
     public List<string> IPCs;
     string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
-    public List<string> underutilizedIPCs;
-    
+    public List<string> underutilizedIPCs = new List<string>(); // Initialize the list
+    private int averageUtilizationRateThreshold { get; set; } = 10;
+    private int peakUtilizationRateThreshold { get; set; } = 15;
+
     protected override async Task OnInitializedAsync()
     {
         ipcData = await DataService.LoadDataAsync(csvFilePath);
         IPCs = ipcData.Select(data => data.IPC).Distinct().ToList();
-        Console.WriteLine($"Total number of unique IPCs: {IPCs.Count()}");
-        // get all IPCs that are underutilized
-        var underutilizedIPCs = ipcData
+        Console.WriteLine($"Total number of unique IPCs: {IPCs.Count}");
+
+        // Get all IPCs that are underutilized
+        UpdateUnderutilizedIPCs();
+    }
+
+    private void AvgChange(ChangeEventArgs e)
+    {
+        averageUtilizationRateThreshold = Convert.ToInt32(e.Value);
+        UpdateUnderutilizedIPCs();
+    }
+
+    private void PeakChange(ChangeEventArgs e)
+    {
+        peakUtilizationRateThreshold = Convert.ToInt32(e.Value);
+        UpdateUnderutilizedIPCs();
+    }
+
+    private void UpdateUnderutilizedIPCs()
+    {
+        underutilizedIPCs = ipcData
             .Where(data => 
-                data.AverageUtilizationRate < 10 && data.PeakUtilizationRate < 20)
+                data.AverageUtilizationRate < averageUtilizationRateThreshold &&
+                data.PeakUtilizationRate < peakUtilizationRateThreshold)
             .Select(data => data.IPC)
             .Distinct()
             .ToList();
-        Console.WriteLine($"Total number of underutilized IPCs: {underutilizedIPCs.Count()}");
+        Console.WriteLine($"Total number of underutilized IPCs: {underutilizedIPCs.Count}");
+        StateHasChanged();
     }
 }
