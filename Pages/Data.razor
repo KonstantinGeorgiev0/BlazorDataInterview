@@ -49,18 +49,6 @@
     private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
     private List<IPCData> IPCData = new List<IPCData>();
     private List<IPCData> selectedData = new List<IPCData>();
-    @* private double[] maxValues = new double[] { };
-    private double[] avgValues = new double[] { }; *@
-    @* private string IpcID = ""; *@
-    @* private int maxCpuMHz = 0; *@
-    @* private bool isUnderutilized = false; *@
-
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadData();
-        @* LoadChart(selectedData); *@
-    }
 
     private async Task LoadData()
     {
@@ -82,14 +70,7 @@
 
         var selectedCpuMHzValues = groupedData.Select(d => d.CpuMHz).Distinct().ToList();
         Console.WriteLine($"Total number of distinct CpuMHz values: {selectedCpuMHzValues.Count()}");
-        var selectedCpuMHz = groupedData.Select(d => d.CpuMHz).Distinct().FirstOrDefault();
-        Console.WriteLine($"Selected CpuMHz: {selectedCpuMHz}");
 
-        @* selectedData = groupedData.Where(d => d.CpuMHz == selectedCpuMHz).ToList(); *@
-        @* maxValues = selectedData.Select(d => d.MaxValue).ToArray();
-        avgValues = selectedData.Select(d => d.AvgValue).ToArray(); *@
-        // get the maximum CPU MHz value
-        @* maxCpuMHz = selectedData.Max(d => d.CpuMHz); *@
         foreach (var cpuMHz in selectedCpuMHzValues)
         {
             var dataCpuMhz = groupedData.Where(d => d.CpuMHz == cpuMHz).ToList();
