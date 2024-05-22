@@ -15,8 +15,10 @@
 <h3>An IPC is considered underutilized if its Average Utilization Rate is below @averageUtilizationRateThreshold% and its Peak Utilization Rate is below @peakUtilizationRateThreshold%.</h3>
 
 <div>
-    <p>There are a total of @(ipcData?.Count() ?? 0) data entries and @(IPCs?.Count() ?? 0) unique IPCs.</p>
-    <p>Underutilized IPCs number @(underutilizedIPCs):</p>
+    <p>
+        There are a total of @(ipcData?.Count() ?? 0) data entries and @(IPCs?.Count() ?? 0) unique IPCs.
+        <br>Total number of Underutilized IPCs is @(underutilizedIPCs).
+    </p>
 </div>
 
 @if (isLoading)
@@ -25,7 +27,9 @@
 }
 else
 {
-    <MudTable Style="margin-bottom: 100px" Items="@Elements" Hover="true" SortLabel="Sort By">
+    <MudTextField @bind-Value="searchTerm" Placeholder="Search IPC ID" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-4" />
+
+    <MudTable Items="@FilteredElements" Hover="true" SortLabel="Sort By">
         <HeaderContent>
             <MudTh>IPC</MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.DataFactory)">Data Factory</MudTableSortLabel></MudTh>
@@ -48,15 +52,33 @@ else
     </MudTable>
 }
 
+<MudButton
+        Style="margin-top: 20px; margin-bottom: 20px; align-self: center;"
+        Href="https://github.com/KonstantinGeorgiev0"
+        Rel="nofollow"
+        Variant="Variant.Filled"
+        EndIcon="@Icons.Custom.Brands.GitHub"
+        Color="Color.Primary">
+    Link to GitHub Repository 
+</MudButton>
+
 @code {
     private bool isLoading = true;
     private IEnumerable<DataModel> Elements { get; set; }
     private List<IPCData> ipcData;
     private List<string> IPCs;
-    string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
     private int underutilizedIPCs = 0; 
     public int averageUtilizationRateThreshold { get; set; } = 10;
     public int peakUtilizationRateThreshold { get; set; } = 20;
+
+    // Search term property
+    private string searchTerm = string.Empty;
+
+    // Filtered elements based on search term
+    private IEnumerable<DataModel> FilteredElements => 
+        string.IsNullOrWhiteSpace(searchTerm) 
+            ? Elements 
+            : Elements.Where(e => e.IpcId.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync()
     {
@@ -74,7 +96,7 @@ else
     private async Task LoadData()
     {
         // load data
-        ipcData = await DataService.LoadDataAsync(csvFilePath);
+        ipcData = await DataService.LoadDataAsync("sample-data/testcase_smart_applicator_V8.2_020823.zip.csv");
         // get unique IPCs
         IPCs = ipcData.Select(data => data.IPC).Distinct().ToList();
         // instantiate DataModel objects with grouped data
@@ -90,9 +112,9 @@ else
                 IsUnderutilized = group.Average(data => data.AvgValue / data.CpuMHz * 100) < averageUtilizationRateThreshold &&
                     group.Average(data => data.MaxValue / data.CpuMHz * 100) < peakUtilizationRateThreshold
             });
-        underutilizedIPCs = Elements.Where(data => data.IsUnderutilized).Select(data => data.IpcId).Count();
+        underutilizedIPCs = Elements.Count(data => data.IsUnderutilized);
     }
- 
+
     /// <summary>
     /// Data model for IPC data
     /// </summary>
