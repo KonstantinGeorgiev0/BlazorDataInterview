@@ -17,7 +17,7 @@
         rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
         <br>Average and peak utilization rates are calculated as a percentage of the IPC's CPU MHz.
     </p>
-    <div style="margin-top: 5px; margin-bottom: 5px;">
+    <div style="justify-content: center; margin-top: 5px; margin-bottom: 5px;">
         <p>Choose a Data Factory number that you would like to see the chart of:</p>
         <InputSelect id="DataFactory" class="form-control" style="width: 200px" 
             @bind-Value="selectedFactory" 
@@ -30,44 +30,53 @@
     </div>
 </div>
 
-@if (data.ContainsKey(selectedFactory))
+@if (isLoading)
 {
-    var facData = data[selectedFactory];
-    <p>
-        Data Factory @selectedFactory contains @facData.IpcCount unique IPCs
-        <br>Out of which @facData.UnderutilizedCount are underutilized and @facData.NotUnderutilized are not underutilized.
-    </p>
-    <MudPaper Class="pa-4 mt-2 d-flex justify-center">
-        <MudChart ChartType="ChartType.Pie" InputData="@facData.Data"
-            @bind-SelectedIndex="Index" InputLabels="@labels" Width="300px" Height="300px" />
-    </MudPaper>
-    <MudText Typo="Typo.h6">Selected portion of the chart: 
-        @(Index >= 0 && Index < labels.Length ? labels[Index] : "None")
-    </MudText>
+    <h3>Loading...</h3>
 }
+else{
+    @if (data.ContainsKey(selectedFactory))
+    {
+        var facData = data[selectedFactory];
+        <p>
+            Data Factory @selectedFactory contains @facData.IpcCount unique IPCs
+            <br>Out of which @facData.UnderutilizedCount are underutilized and @facData.NotUnderutilizedCount are not underutilized.
+        </p>
+        <MudPaper Class="pa-4 mt-2 d-flex justify-center">
+            <MudChart ChartType="ChartType.Pie" InputData="@facData.Data"
+                @bind-SelectedIndex="Index" InputLabels="@labels" Width="300px" Height="300px" />
+        </MudPaper>
+        <MudText Typo="Typo.h6">Selected portion of the chart: 
+            @(Index >= 0 && Index < labels.Length ? labels[Index] : "None") 
+        </MudText>
+    }
 
-<div class="container mt-3 mb-3">    
-    <h3>Distribution of Underutilized IPCs per Data Factory</h3>
-    <MudPaper Class="pa-4 mt-2 d-flex justify-center">
-        <MudChart ChartType="ChartType.Pie" InputData="@data2" 
-            @bind-SelectedIndex="Index2" InputLabels="@labels2" Width="300px" Height="300px" />
-    </MudPaper>
-    <MudText Typo="Typo.h6">
-        Selected portion of the chart: @(Index2 >= 0 && Index2 < labels2.Length ? labels2[Index2] : "None")
-    </MudText>
-</div>
+    <div class="container mt-3 mb-3">    
+        <h3>Distribution of Underutilized IPCs per Data Factory</h3>
+        <MudPaper Class="pa-4 mt-2 d-flex justify-center">
+            <MudChart ChartType="ChartType.Pie" InputData="@data2" 
+                @bind-SelectedIndex="Index2" InputLabels="@labels2" Width="300px" Height="300px" />
+        </MudPaper>
+        <MudText Typo="Typo.h6">
+            Selected portion of the chart: 
+            @(Index2 >= 0 && Index2 < labels2.Length ? $"{labels2[Index2]}: {data2[Index2] / underutilizedTotal * 100:0.00}%" : "None") 
+        </MudText>
+    </div>
 
-<div class="container mt-3 mb-3">
-    <h3>Distribution of Utilized IPCs per Data Factory</h3>
-    <MudPaper Class="pa-4 mt-2 d-flex justify-center">
-        <MudChart ChartType="ChartType.Pie" InputData="@data3"
-        @bind-SelectedIndex="Index3" InputLabels="@labels2" Width="300px" Height="300px" />
-    </MudPaper>
-    <MudText Typo="Typo.h6">
-        Selected portion of the chart: @(Index3 >= 0 && Index3 < labels2.Length ? labels2[Index3] : "None")
-    </MudText>
-</div>
+    <div class="container mt-3 mb-3">
+        <h3>Distribution of Utilized IPCs per Data Factory</h3>
+        <MudPaper Class="pa-4 mt-2 d-flex justify-center">
+            <MudChart ChartType="ChartType.Pie" InputData="@data3"
+            @bind-SelectedIndex="Index3" InputLabels="@labels2" Width="300px" Height="300px" />
+        </MudPaper>
+        <MudText Typo="Typo.h6">
+            Selected portion of the chart: 
+            @(Index3 >= 0 && Index3 < labels2.Length ? $"{labels2[Index3]}: {data3[Index3] / utilizedTotal * 100:0.00}%" : "None")
+        </MudText>
+    </div>
+}
 @code {
+    private bool isLoading = true;
     // Variables for data
     private List<IPCData> IpcData = new List<IPCData>();
     private int avgThreshold = 10;
@@ -76,9 +85,9 @@
 
     // Variables for pie chart
     private int Index = -1; // Default value cannot be 0 -> first selected index is 0.
-    @* private string[] Index = new string[] { "Not Underutilized", "Underutilized" }; *@
     private Dictionary<int, DataClass> data = new Dictionary<int, DataClass>();
     string[] labels = { "Not Underutilized", "Underutilized"};
+    private int total = 0;
 
     // Variables for pie chart Factory Utilization Distribution
     private int Index2 = -1;
@@ -87,6 +96,8 @@
     private List<double> utilizedPerFactory = new List<double>();
     private double[] data2 = { 1, 1, 1, 1, 1 };
     private double[] data3 = { 1, 1, 1, 1, 1 };
+    private double utilizedTotal = 0;
+    private double underutilizedTotal = 0;
     private string[] labels2 = { "Factory 1", "Factory 2", "Factory 3", "Factory 4", "Factory 5" };
     
     // Variables for input select
@@ -95,7 +106,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         await LoadData();
+        isLoading = false;
     }
 
     private async Task LoadData()
@@ -149,7 +162,10 @@
 
         // load variables for pie charts Factory Utilization Distribution
         underUtilizedPerFactory.Add(underutilized);
+        underutilizedTotal += underutilized;
         utilizedPerFactory.Add(notUnderutilized);
+        utilizedTotal += notUnderutilized;
+        total = total + (notUnderutilized + underutilized);
 
         // load data 
         data[selectedFactory] = new DataClass
@@ -157,7 +173,7 @@
             Data = new double[] { notUnderutilized, underutilized },
             IpcCount = uniqueIPCs,
             UnderutilizedCount = underutilized,
-            NotUnderutilized = notUnderutilized
+            NotUnderutilizedCount = notUnderutilized
         };
     }
 
@@ -173,6 +189,6 @@
         public double[] Data { get; set; }
         public int IpcCount { get; set; }
         public int UnderutilizedCount { get; set; }
-        public int NotUnderutilized { get; set; }
+        public int NotUnderutilizedCount { get; set; }
     }
 }

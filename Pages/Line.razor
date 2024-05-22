@@ -1,4 +1,4 @@
-@page "/data"
+@page "/line"
 @using MudBlazor
 @using MudBlazor.Charts
 @using BlazorInterview.Models
@@ -13,7 +13,7 @@
         rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
         <br>Peak utilization is shown in blue and average utilization is shown in green.
     </p>
-    <MudPaper Class="pa-2 mt-2 mb-2">
+    <MudPaper Class="pa-3 mt-2 mb-2">
         <p>Choose a CpuMHz value that you would like to see the chart of:</p>
         <InputSelect class="form-control" id="CPU" style="width:150px"
             @bind-Value="selectedCpuMHz" 
@@ -48,7 +48,7 @@ else
                     <p style="color: green;">IPCs sharing Max CpuMHz of @selectedCpuMHz are on average not underutilized.</p>
                 }
             </div>
-            <MudPaper Class="mt-2 mb-2">
+            <MudPaper Class="pa-4 mt-2 mb-2">
                 <MudChart
                     ChartType="MudBlazor.ChartType.Line" 
                     ChartSeries="@cpuMHzData.Series" 
@@ -58,7 +58,7 @@ else
                     ChartOptions="@Options"/>
             </MudPaper>
                 
-            <MudPaper Class="pa-4 mt-2 mb-2">
+            <MudPaper Class="pa-3 mt-2 mb-2">
                 <p>Out of this group, choose an IPC that you would like to see the chart of:</p>
                 <InputSelect class="form-control" id="IPC" style="width:150px"
                     @bind-Value="selectedIPC" 
