@@ -1,0 +1,90 @@
+@page "/pie"
+@using MudBlazor
+@using MudBlazor.Charts
+@using BlazorInterview.Models
+@using BlazorInterview.Services
+@inject DataService DataService
+
+<div>
+    <p>Pie Chart showcasing Industrial PC (IPC).
+        <br>An IPC is considered underutilized if its average utilization 
+        rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
+    </p>
+    <div style="margin: 10px;">
+        <p>Choose a Data Factory number that you would like to see the chart of</p>
+        <InputSelect id="DataFactory" @bind-Value="selectedFactory" @onchange="OnFactorySelectionChange">
+            @foreach (var factory in FactoryValues)
+            {
+                <option value="@factory">@factory</option>
+            }
+        </InputSelect>
+    </div>
+</div>
+
+<MudPaper Class="pa-4 mt-2 d-flex justify-center">
+    <MudChart ChartType="ChartType.Pie" InputData="@data" @bind-SelectedIndex="Index" InputLabels="@labels" Width="300px" Height="300px" />
+</MudPaper>
+@* <MudPaper Class="pa-4 mt-2 d-flex justify-center">
+    <MudButton OnClick="AddDataSize" Variant="Variant.Filled" Color="Color.Primary">Add</MudButton>
+    <MudButton @onclick="RandomizeData" Variant="Variant.Filled" Class="mx-4">Randomize</MudButton>
+    <MudButton OnClick="RemoveDataSize" Variant="Variant.Filled" Color="Color.Secondary">Remove</MudButton>  
+</MudPaper> *@
+<MudText Typo="Typo.h6">Selected portion of the chart: @Index</MudText>
+
+@code {
+    // variables for data
+    private List<IPCData> IpcData = new List<IPCData>();
+    private int avgThreshold = 10;
+    private int peakThreshold = 20;
+    private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
+
+    // variables for pie chart
+    private int Index = -1; //default value cannot be 0 -> first selectedindex is 0.
+    @* int dataSize = 2; *@
+    double[] data = { 77, 23 };
+    string[] labels = { "Not Underutilized", "Underutilized"};
+    
+    // variables for input select
+    private int selectedFactory { get; set; }
+    private List<int> FactoryValues = new List<int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        IpcData = await DataService.LoadDataAsync(csvFilePath);
+        // group data by Data Factory
+        var groupedData = IpcData
+            .GroupBy(d => d.DataFactory)
+            .SelectMany(g => 
+                g.GroupBy(d => d.IPC)
+                    .Select(ipcGroup => new IPCData
+                    {
+                        IPC = ipcGroup.Key,
+                        DataFactory = g.Key,
+                        AvgValue = ipcGroup.Average(d => d.AvgValue),
+                        MaxValue = ipcGroup.Average(d => d.MaxValue),
+                    })
+                )
+            .ToList();
+        // get unique factory values
+        FactoryValues = groupedData.Select(d => d.DataFactory).Distinct().ToList();
+        // get proportion of each factory that is underutilized
+        LoadPieData(groupedData, selectedFactory, out data);
+    }
+
+    private void LoadPieData(List<IPCData> factoryData, int selectedFactory, out double[] data)
+    {
+        var selectedData = factoryData.Where(d => d.DataFactory == selectedFactory);
+        var underutilized = selectedData.Count(d => d.AvgValue < avgThreshold && d.MaxValue < peakThreshold);
+        var notUnderutilized = selectedData.Count() - underutilized;
+        data = new double[] { notUnderutilized, underutilized }; 
+    }
+    private void OnFactorySelectionChange(ChangeEventArgs e)
+    {
+        selectedFactory = Convert.ToInt32(e.Value);
+        StateHasChanged();
+    }
+}
