@@ -2,6 +2,8 @@
 @inject HttpClient Http
 @using BlazorInterview.Models
 @using BlazorInterview.Services
+@using MudBlazor
+@using System.Net.Http.Json
 @inject DataService DataService
 
 <PageTitle>Smart Applicator</PageTitle>
@@ -12,63 +14,95 @@
 
 <h3>An IPC is considered underutilized if its Average Utilization Rate is below @averageUtilizationRateThreshold% and its Peak Utilization Rate is below @peakUtilizationRateThreshold%.</h3>
 
-<InputNumber @bind-Value="averageUtilizationRateThreshold" @onchange="AvgChange" Label="Average Utilization Rate Threshold" Min="0" Max="100" Step="1" />
-<InputNumber @bind-Value="peakUtilizationRateThreshold" @onchange="PeakChange" Label="Peak Utilization Rate Threshold" Min="0" Max="100" Step="1" />
-
 <div>
     <p>There are a total of @(ipcData?.Count() ?? 0) data entries and @(IPCs?.Count() ?? 0) unique IPCs.</p>
-    <p>Underutilized IPCs number @(underutilizedIPCs?.Count() ?? 0):</p>
-    <ul>
-        @if (underutilizedIPCs != null)
-        {
-            @foreach (var ipc in underutilizedIPCs)
-            {
-                <li>@ipc</li>
-            }
-        }
-    </ul>
+    <p>Underutilized IPCs number @(underutilizedIPCs):</p>
 </div>
 
+@if (isLoading)
+{
+    <h3>Loading...</h3>
+}
+else
+{
+    <MudTable Style="margin-bottom: 100px" Items="@Elements" Hover="true" SortLabel="Sort By">
+        <HeaderContent>
+            <MudTh>IPC</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.DataFactory)">Data Factory</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.AverageUtilizationRate)">Average Utilization</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.PeakUtilizationRate)">Peak Utilization</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.CpuMHz)">CPU (MHz)</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.IsUnderutilized)">Underutilized</MudTableSortLabel></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="IPC">@context.IpcId</MudTd>
+            <MudTd DataLabel="Data Factory">@context.DataFactory</MudTd>
+            <MudTd DataLabel="Average Utilization">@context.AverageUtilizationRate</MudTd>
+            <MudTd DataLabel="Peak Utilization">@context.PeakUtilizationRate</MudTd>
+            <MudTd DataLabel="CPU (MHz)">@context.CpuMHz</MudTd>
+            <MudTd DataLabel="Underutilized">@context.IsUnderutilized</MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+        </PagerContent>
+    </MudTable>
+}
+
 @code {
-    public List<IPCData> ipcData;
-    public List<string> IPCs;
+    private bool isLoading = true;
+    private IEnumerable<DataModel> Elements { get; set; }
+    private List<IPCData> ipcData;
+    private List<string> IPCs;
     string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
-    public List<string> underutilizedIPCs = new List<string>(); // Initialize the list
+    private int underutilizedIPCs = 0; 
     private int averageUtilizationRateThreshold { get; set; } = 10;
-    private int peakUtilizationRateThreshold { get; set; } = 15;
+    private int peakUtilizationRateThreshold { get; set; } = 20;
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
+        await LoadData();
+        isLoading = false;
+    }
+
+    /// <summary>
+    /// Load table data. Initially, group by IPC and calculate average and peak utilization rates.
+    /// Take Data Factory and CPU (MHz) values as well.
+    /// After that, determine whether the IPC is underutilized. 
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadData()
+    {
+        // load data
         ipcData = await DataService.LoadDataAsync(csvFilePath);
+        // get unique IPCs
         IPCs = ipcData.Select(data => data.IPC).Distinct().ToList();
-        Console.WriteLine($"Total number of unique IPCs: {IPCs.Count}");
-
-        // Get all IPCs that are underutilized
-        UpdateUnderutilizedIPCs();
+        // instantiate DataModel objects with grouped data
+        Elements = ipcData
+            .GroupBy(data => data.IPC)
+            .Select(group => new DataModel
+            {
+                IpcId = group.Key,
+                DataFactory = group.First().DataFactory,
+                AverageUtilizationRate = group.Average(data => data.AvgValue),
+                PeakUtilizationRate = group.Average(data => data.MaxValue),
+                CpuMHz = group.First().CpuMHz,
+                IsUnderutilized = group.Average(data => data.AvgValue / data.CpuMHz * 100) < averageUtilizationRateThreshold &&
+                    group.Average(data => data.MaxValue / data.CpuMHz * 100) < peakUtilizationRateThreshold
+            });
+        underutilizedIPCs = Elements.Where(data => data.IsUnderutilized).Select(data => data.IpcId).Count();
     }
-
-    private void AvgChange(ChangeEventArgs e)
+ 
+    /// <summary>
+    /// Data model for IPC data
+    /// </summary>
+    public class DataModel
     {
-        averageUtilizationRateThreshold = Convert.ToInt32(e.Value);
-        UpdateUnderutilizedIPCs();
-    }
-
-    private void PeakChange(ChangeEventArgs e)
-    {
-        peakUtilizationRateThreshold = Convert.ToInt32(e.Value);
-        UpdateUnderutilizedIPCs();
-    }
-
-    private void UpdateUnderutilizedIPCs()
-    {
-        underutilizedIPCs = ipcData
-            .Where(data => 
-                data.AverageUtilizationRate < averageUtilizationRateThreshold &&
-                data.PeakUtilizationRate < peakUtilizationRateThreshold)
-            .Select(data => data.IPC)
-            .Distinct()
-            .ToList();
-        Console.WriteLine($"Total number of underutilized IPCs: {underutilizedIPCs.Count}");
-        StateHasChanged();
+        public string IpcId { get; set; }
+        public int DataFactory { get; set; }
+        public double AverageUtilizationRate { get; set; }
+        public double PeakUtilizationRate { get; set; }
+        public int CpuMHz { get; set; }
+        public bool IsUnderutilized { get; set; }
     }
 }
