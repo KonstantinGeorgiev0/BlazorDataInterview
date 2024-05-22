@@ -13,7 +13,7 @@
     </p>
     <div style="margin: 10px;">
         <p>Choose a CpuMHz value that you would like to see the chart of</p>
-        <InputSelect class="form-control" id="CPU" style="width:100%"
+        <InputSelect class="form-control" id="CPU" style="width:150px"
             @bind-Value="selectedCpuMHz" 
             @onchange="OnCpuSelectionChange">
                 @foreach (var cpu in CpuMHzValues)
@@ -51,7 +51,7 @@
         
         <div style="margin: 10px;">
             <p>Choose an IPC ID that you would like to see the chart of</p>
-            <InputSelect class="form-control" id="IPC" style="width:100%"
+            <InputSelect class="form-control" id="IPC" style="width:150px"
                 @bind-Value="selectedIPC" 
                 @onchange="OnIPCSelectionChange">
                     @foreach (var ipc in IpcValues)
