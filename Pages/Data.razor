@@ -13,11 +13,13 @@
     </p>
     <div style="margin: 10px;">
         <p>Choose a CpuMHz value that you would like to see the chart of</p>
-        <InputSelect id="CPU" @bind-Value="selectedCpuMHz" @onchange="OnCpuSelectionChange">
-            @foreach (var cpu in CpuMHzValues)
-            {
-                <option value="@cpu">@cpu</option>
-            }
+        <InputSelect class="form-control" id="CPU" style="width:100%"
+            @bind-Value="selectedCpuMHz" 
+            @onchange="OnCpuSelectionChange">
+                @foreach (var cpu in CpuMHzValues)
+                {
+                    <option value="@cpu">@cpu</option>
+                }
         </InputSelect>
     </div>
 </div>
@@ -32,14 +34,14 @@
             <p>Peak Utilization Rate: @cpuMHzData.PeakUtilizationRate%</p>
             @if (cpuMHzData.IsUnderutilized)
             {
-                <p style="color: green;">This IPC is underutilized.</p>
+                <p style="color: red;">IPCs sharing Max CpuMHz of @selectedCpuMHz are on average underutilized.</p>
             }
             else
             {
-                <p style="color: red;">This IPC is not underutilized.</p>
+                <p style="color: green;">IPCs sharing Max CpuMHz of @selectedCpuMHz are on average not underutilized.</p>
             }
         </div>
-        <MudChart 
+        <MudChart Class="pa-4 mt-2 d-flex justify-center"
             ChartType="MudBlazor.ChartType.Line" 
             ChartSeries="@cpuMHzData.Series" 
             @bind-SelectedIndex="Index" 
@@ -49,11 +51,13 @@
         
         <div style="margin: 10px;">
             <p>Choose an IPC ID that you would like to see the chart of</p>
-            <InputSelect id="IPC" @bind-Value="selectedIPC" @onchange="OnIPCSelectionChange">
-                @foreach (var ipc in IpcValues)
-                {
-                    <option value="@ipc">@ipc</option>
-                }
+            <InputSelect class="form-control" id="IPC" style="width:100%"
+                @bind-Value="selectedIPC" 
+                @onchange="OnIPCSelectionChange">
+                    @foreach (var ipc in IpcValues)
+                    {
+                        <option value="@ipc">@ipc</option>
+                    }
             </InputSelect>
         </div>
     </div>
@@ -77,7 +81,7 @@
                     <span style="color: red;">This IPC is not underutilized.</span>
                 }
             </p>
-            <MudChart 
+            <MudChart Class="pa-4 mt-2 d-flex justify-center"
                 ChartType="MudBlazor.ChartType.Line" 
                 ChartSeries="@ipcData.Series" 
                 @bind-SelectedIndex="Index" 
@@ -190,7 +194,15 @@
         {
             IpcValues = chartDataByCpuMHz[selectedCpuMHz].DistinctIPCs.ToList();
             selectedIPC = IpcValues.FirstOrDefault(); // set initial selected value
+            Console.WriteLine($"Selected IPC: {selectedIPC}");
+            // clear previous IPC chart data
+            chartDataByIPC.Clear();
+            // load new ipc data
             LoadIpcChartData(selectedCpuMHz, selectedIPC);
+            @* foreach (var ipc in IpcValues)
+            {
+                LoadIpcChartData(selectedCpuMHz, ipc);
+            } *@
         }
         StateHasChanged();
     }
