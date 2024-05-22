@@ -13,6 +13,13 @@
         rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
         <br>Peak utilization is shown in blue and average utilization is shown in green.
     </p>
+</div>
+@if (isLoading)
+{
+    <h3>Loading...</h3>
+}
+else
+{
     <MudPaper Class="pa-3 mt-2 mb-2">
         <p>Choose a CpuMHz value that you would like to see the chart of:</p>
         <InputSelect class="form-control" id="CPU" style="width:150px"
@@ -24,13 +31,6 @@
                 }
         </InputSelect>
     </MudPaper>
-</div>
-@if (isLoading)
-{
-    <h3>Loading...</h3>
-}
-else
-{
     @if (chartDataByCpuMHz.ContainsKey(selectedCpuMHz))
     {
         var cpuMHzData = chartDataByCpuMHz[selectedCpuMHz];
@@ -57,20 +57,18 @@ else
                     Width="100%" Height="350" 
                     ChartOptions="@Options"/>
             </MudPaper>
-                
-            <MudPaper Class="pa-3 mt-2 mb-2">
-                <p>Out of this group, choose an IPC that you would like to see the chart of:</p>
-                <InputSelect class="form-control" id="IPC" style="width:150px"
-                    @bind-Value="selectedIPC" 
-                    @onchange="OnIPCSelectionChange">
-                        @foreach (var ipc in IpcValues)
-                        {
-                            <option value="@ipc">@ipc</option>
-                        }
-                </InputSelect>
-            </MudPaper>
         </div>
     }
+
+    <MudPaper Class="pa-3 mt-2 mb-2">
+        <p>
+            Input an IPC that you would like to see the chart of:
+            <br>You can look them up in the Home page.
+        </p>
+        <MudTextField @bind-Value="selectedIPC" @onchange="OnIPCSelectionChange" 
+            Label="IPC" Variant="Variant.Text">
+        </MudTextField>
+    </MudPaper>
 
     @if (!string.IsNullOrEmpty(selectedIPC) && chartDataByIPC.ContainsKey(selectedIPC))
     {
@@ -78,7 +76,7 @@ else
         <div>
             <div>
                 <p>Data for IPC ID: @selectedIPC
-                    <br>Max CPU MHz: @selectedCpuMHz
+                    <br>Max CPU MHz: @ipcData.CpuMHz
                     <br>Average Utilization Rate: @ipcData.AverageUtilizationRate%
                     <br>Peak Utilization Rate: @ipcData.PeakUtilizationRate%
                     <br>@if (ipcData.IsUnderutilized)
@@ -117,7 +115,7 @@ else
     // variables for data
     private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
     private List<IPCData> IPCData = new List<IPCData>();
-    private int peakThreshold = 15;
+    private int peakThreshold = 20;
     private int avgThreshold = 10;
 
     // variables for input select
@@ -137,7 +135,7 @@ else
     {
         IPCData = await DataService.LoadDataAsync(csvFilePath);
         // Group data by value of CPU MHz, then by date, and take averages of avg and max Values for each day
-        var groupedData = IPCData
+        var groupedDataCpu = IPCData
             .GroupBy(d => d.CpuMHz)
             .SelectMany(cpuGroup => 
                 cpuGroup.GroupBy(g => g.Time.Date)
@@ -152,26 +150,35 @@ else
             )
             .ToList();
 
-        CpuMHzValues = groupedData.Select(d => d.CpuMHz).Distinct().ToList();
+        @* var groupedDataIpc = IPCData
+            .GroupBy(d => d.IPC)
+            .Select(ipcGroup => new IPCData
+                {
+                    IPC = ipcGroup.Key,
+                    AvgValue = ipcGroup.Average(d => d.AvgValue),
+                    MaxValue = ipcGroup.Average(d => d.MaxValue),
+                    CpuMHz = ipcGroup.Select(d => d.CpuMHz).FirstOrDefault()
+                })
+            .ToList(); *@
+
+        CpuMHzValues = IPCData.Select(d => d.CpuMHz).Distinct().ToList();
+        IpcValues = IPCData.Select(d => d.IPC).Distinct().ToList();
+        Console.WriteLine($"Count of IPC: {IpcValues.Count()}");
 
         foreach (var cpuMHz in CpuMHzValues)
         {
-            ProcessChartData(groupedData, cpuMHz);
+            LoadCpuChartData(groupedDataCpu, cpuMHz);
         }
-
         selectedCpuMHz = CpuMHzValues.FirstOrDefault(); // set initial selected value
-        if (chartDataByCpuMHz.ContainsKey(selectedCpuMHz))
+
+        @* foreach (var ipc in IpcValues)
         {
-            IpcValues = chartDataByCpuMHz[selectedCpuMHz].DistinctIPCs.ToList();
-            selectedIPC = IpcValues.FirstOrDefault(); // set initial selected value
-            foreach (var ipc in IpcValues)
-            {
-                LoadIpcChartData(selectedCpuMHz, ipc);
-            }
-        }
+            LoadIpcChartData(ipc);
+        } *@
+        selectedIPC = IpcValues.FirstOrDefault(); // set initial selected value
     }
 
-    private void ProcessChartData(List<IPCData> groupedData, int cpuMHz)
+    private void LoadCpuChartData(List<IPCData> groupedData, int cpuMHz)
     {
         var dataCpuMhz = groupedData.Where(d => d.CpuMHz == cpuMHz).ToList();
         var maxValues = dataCpuMhz.Select(d => d.MaxValue).ToArray();
@@ -197,50 +204,52 @@ else
             XAxisLabels = XAxisLabels,
             AverageUtilizationRate = averageUtilizationRate,
             PeakUtilizationRate = peakUtilizationRate,
-            IsUnderutilized = isUnderutilized,
-            DistinctIPCs = distinctIPCs.ToList()
+            IsUnderutilized = isUnderutilized
         });
     }
 
-    private void OnCpuSelectionChange(ChangeEventArgs e)
+    @* private void LoadChartData<T>(Dictionary<T, ChartData> chartData, List<IPCData> groupedData, T key, bool isCpuMHz)
     {
-        selectedCpuMHz = int.Parse(e.Value.ToString());
-        if (chartDataByCpuMHz.ContainsKey(selectedCpuMHz))
-        {
-            IpcValues = chartDataByCpuMHz[selectedCpuMHz].DistinctIPCs.ToList();
-            selectedIPC = IpcValues.FirstOrDefault(); // set initial selected value
-            Console.WriteLine($"Selected IPC: {selectedIPC}");
-            // clear previous IPC chart data
-            chartDataByIPC.Clear();
-            // load new ipc data
-            LoadIpcChartData(selectedCpuMHz, selectedIPC);
-            @* foreach (var ipc in IpcValues)
-            {
-                LoadIpcChartData(selectedCpuMHz, ipc);
-            } *@
-        }
-        StateHasChanged();
-    }
+        var data = isCpuMHz
+            ? groupedData.Where(d => d.CpuMHz.ToString().Equals(key.ToString())).ToList()
+            : groupedData.Where(d => d.IPC.Equals(key.ToString())).ToList();
 
-    private void OnIPCSelectionChange(ChangeEventArgs e)
-    {
-        selectedIPC = e.Value.ToString();
-        if (!string.IsNullOrEmpty(selectedIPC))
-        {
-            LoadIpcChartData(selectedCpuMHz, selectedIPC);
-        }
-        StateHasChanged();
-    }
+        var maxValues = data.Select(d => d.MaxValue).ToArray();
+        var avgValues = data.Select(d => d.AvgValue).ToArray();
+        var cpuMHz = data.Select(d => d.CpuMHz).FirstOrDefault();
+        var avgUtilization = avgValues.Average() / cpuMHz * 100;
+        var maxUtilization = maxValues.Average() / cpuMHz * 100;
 
-    private void LoadIpcChartData(int cpuMHz, string ipcId)
+        var ChartSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Peak Utilization", Data = maxValues },
+            new ChartSeries { Name = "Average Utilization", Data = avgValues }
+        };
+
+        var XAxisLabels = data
+            .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
+            .ToArray();
+
+        chartData.Add(key, new ChartData 
+        { 
+            Series = ChartSeries, 
+            XAxisLabels = XAxisLabels,
+            AverageUtilizationRate = Math.Round(avgUtilization, 2),
+            PeakUtilizationRate = Math.Round(maxUtilization, 2),
+            IsUnderutilized = avgUtilization < avgThreshold && maxUtilization < peakThreshold
+        });
+    } *@
+
+    private void LoadIpcChartData(string ipcId)
     {
         var ipcData = IPCData
-            .Where(d => d.CpuMHz == cpuMHz && d.IPC.Trim().Equals(ipcId))
+            .Where(d => d.IPC.Trim().Equals(ipcId))
             .OrderBy(d => d.Time)
             .ToList();
 
         var maxValues = ipcData.Select(d => d.MaxValue).ToArray();
         var avgValues = ipcData.Select(d => d.AvgValue).ToArray();
+        var cpuMHz = ipcData.Select(d => d.CpuMHz).FirstOrDefault();
         var avgUtilization = avgValues.Average() / cpuMHz * 100;
         var maxUtilization = maxValues.Average() / cpuMHz * 100;
 
@@ -254,14 +263,28 @@ else
             .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
             .ToArray();
 
-        chartDataByIPC[ipcId] = new ChartData 
+        chartDataByIPC.Add(ipcId, new ChartData 
         { 
             Series = ChartSeries, 
             XAxisLabels = XAxisLabels,
-            AverageUtilizationRate = Math.Round(avgValues.Average() / cpuMHz * 100, 2),
-            PeakUtilizationRate = Math.Round(maxValues.Average() / cpuMHz * 100, 2),
-            IsUnderutilized = avgUtilization < avgThreshold && maxUtilization < peakThreshold
-        };
+            AverageUtilizationRate = Math.Round(avgUtilization, 2),
+            PeakUtilizationRate = Math.Round(maxUtilization, 2),
+            IsUnderutilized = avgUtilization < avgThreshold && maxUtilization < peakThreshold,
+            CpuMHz = cpuMHz
+        });
+    }
+
+    private void OnCpuSelectionChange(ChangeEventArgs e)
+    {
+        selectedCpuMHz = int.Parse(e.Value.ToString());
+        StateHasChanged();
+    }
+
+    private void OnIPCSelectionChange(ChangeEventArgs e)
+    {
+        selectedIPC = e.Value.ToString();
+        LoadIpcChartData(selectedIPC);
+        StateHasChanged();
     }
 
     private class ChartData
@@ -271,6 +294,6 @@ else
         public double AverageUtilizationRate { get; set; }
         public double PeakUtilizationRate { get; set; }
         public bool IsUnderutilized { get; set; }
-        public List<string> DistinctIPCs { get; set; }
+        public int CpuMHz { get; set; }
     }
 }
