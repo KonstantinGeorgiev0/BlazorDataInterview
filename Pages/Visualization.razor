@@ -1,39 +1,185 @@
-﻿@* @page "/visualization"
-@using MudBlazor.Charts
+﻿@page "/visualization"
 @using MudBlazor
-@using System;
-@using System.Linq;
-@using System.Text;
-@using System.Threading.Tasks;
-@using System.Collections.Generic
+@using MudBlazor.Charts
 @using BlazorInterview.Models
 @using BlazorInterview.Services
-@using BlazorInterview.Pages
-@using Syncfusion.Blazor.DropDowns
 @inject DataService DataService
 
-
 <div>
-    <SfDropDownList Placeholder="e.g. Australia" TItem="Countries" TValue="string">
-        <SfDataManager Json=@Country></SfDataManager>
-        <DropDownListFieldSettings Value="Name"></DropDownListFieldSettings>
-    </SfDropDownList>
+    <p>Line Chart showcasing Industrial PC (IPC).
+        <br>An IPC is considered underutilized if its average utilization 
+        rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
+        <br>Peak utilization is shown in blue and average utilization is shown in green.
+    </p>
+    <div style="margin: 10px;">
+        <p>Choose a Data Factory number that you would like to see the chart of</p>
+        <InputSelect id="DataFactory" @bind-Value="selectedFactory" @onchange="OnFactorySelectionChange">
+            @foreach (var factory in FactoryValues)
+            {
+                <option value="@factory">@factory</option>
+            }
+        </InputSelect>
+    </div>
 </div>
-@code{
-    public class Countries
-    {
-        public string Name { get; set; }
 
-        public string Code { get; set; }
+@if (chartDataByFactory.ContainsKey(selectedFactory))
+{
+    var factoryData = chartDataByFactory[selectedFactory];
+    <div>
+        <div>
+            <p>Grouped Data based on Data Factory: @selectedFactory (average of values is taken for each day)
+                <br>Average of CpuMHz values is taken to show the general idea. Data, therefore, is not accurate.
+                <br>Average CpuMHz of Data Factory @selectedFactory: @avgCpuMHz
+                <br>Distinct CpuMHz values: @string.Join(", ", factoryData.DistinctCPUs)
+                <br>Average Utilization Rate: @factoryData.AverageUtilizationRate%
+                <br>Peak Utilization Rate: @factoryData.PeakUtilizationRate%
+            </p>
+            @if (factoryData.IsUnderutilized)
+            {
+                <p style="color: red;">IPCs in Data Factory @selectedFactory are on average underutilized.</p>
+            }
+            else
+            {
+                <p style="color: green;">IPCs in Data Factory @selectedFactory are on average not underutilized.</p>
+            }
+        </div>
+        <MudChart 
+            ChartType="MudBlazor.ChartType.Line" 
+            ChartSeries="@factoryData.Series" 
+            @bind-SelectedIndex="Index" 
+            XAxisLabels="@factoryData.XAxisLabels" 
+            Width="100%" Height="350" 
+            ChartOptions="@Options"/>
+    </div>
+}
+@* @foreach (var factoryData in chartDataByFactory)
+{
+    <div>
+        <div>
+            <p>Grouped Data based on Maximum CPU MHz: @factoryData.Key (average of values is taken for each day)</p>
+            <p>Average Utilization Rate: @factoryData.Value.AverageUtilizationRate%</p>
+            <p>Peak Utilization Rate: @factoryData.Value.PeakUtilizationRate%</p>
+            @if (factoryData.Value.IsUnderutilized)
+            {
+                <p style="color: green;">This IPC is underutilized.</p>
+            }
+            else
+            {
+                <p style="color: red;">This IPC is not underutilized.</p>
+            }
+        </div>
+        <MudChart 
+            ChartType="MudBlazor.ChartType.Line" 
+            ChartSeries="@factoryData.Value.Series" 
+            @bind-SelectedIndex="Index" 
+            XAxisLabels="@factoryData.Value.XAxisLabels" 
+            Width="100%" Height="350" 
+            ChartOptions="@Options"/>
+    </div>
+} *@
+
+@code 
+{
+    // variables for line chart
+    private List<ChartSeries> Series = new List<ChartSeries>();
+    private string[] XAxisLabels = Array.Empty<string>();
+    private int Index = -1;
+    private ChartOptions Options = new ChartOptions();
+    private Dictionary<int, ChartData> chartDataByFactory = new Dictionary<int, ChartData>();
+
+    // variables for data
+    private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
+    private List<IPCData> IPCData = new List<IPCData>();
+    private List<IPCData> selectedData = new List<IPCData>();
+    private int avgThreshold = 10;
+    private int peakThreshold = 15;
+    private int avgCpuMHz = 0;
+
+    // variables for input select
+    public int selectedFactory { get; set; }
+    private List<int> FactoryValues = new List<int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
     }
 
-    public Countries[] Country = new Countries[]
+    private async Task LoadData()
     {
-        new Countries { Name = "Australia", Code = "AU" },
-        new Countries { Name = "Bermuda", Code = "BM" },
-        new Countries { Name = "Canada", Code = "CA" },
-        new Countries { Name = "Cameroon", Code = "CM" }
-    };
-}
+        IPCData = await DataService.LoadDataAsync(csvFilePath);
+        // Group data by value of Data Factory, then by date, and take averages of avg and max Values for each day
+        var groupedData = IPCData
+            .GroupBy(d => new { d.DataFactory, d.CpuMHz })
+            .SelectMany(factoryGroup => 
+                factoryGroup.GroupBy(g => g.Time.Date)
+                    .Select(dateGroup => new IPCData
+                    {
+                        Time = dateGroup.Key,
+                        IPC = string.Join(",", dateGroup.Select(d => d.IPC).Distinct()), 
+                        DataFactory = factoryGroup.Key.DataFactory,
+                        AvgValue = dateGroup.Average(d => d.AvgValue),
+                        MaxValue = dateGroup.Average(d => d.MaxValue),
+                        CpuMHz = factoryGroup.Key.CpuMHz 
+                    }
+                )
+            )
+            .ToList();
 
- *@
+        // get distinct factory values
+        FactoryValues = groupedData.Select(d => d.DataFactory).Distinct().ToList();
+        // for each factory, load data
+        foreach (var factory in FactoryValues)
+        {
+            LoadFactoryChartData(groupedData, factory);
+        }
+    }
+    private class ChartData
+    {
+        public List<ChartSeries> Series { get; set; }
+        public string[] XAxisLabels { get; set; }
+        public double AverageUtilizationRate { get; set; }
+        public double PeakUtilizationRate { get; set; }
+        public bool IsUnderutilized { get; set; }
+        public List<string> DistinctIPCs { get; set; }
+        public List<int> DistinctCPUs { get; set; }
+    }
+    private void OnFactorySelectionChange(ChangeEventArgs e)
+    {
+        selectedFactory = int.Parse(e.Value.ToString());
+        StateHasChanged();
+    }
+    private void LoadFactoryChartData(List<IPCData> groupedData, int factory)
+    {
+        var dataFactory = groupedData.Where(d => d.DataFactory == factory).ToList();
+        var maxValues = dataFactory.Select(d => d.MaxValue).ToArray();
+        var avgValues = dataFactory.Select(d => d.AvgValue).ToArray();
+        var distinctCpu = dataFactory.Select(d => d.CpuMHz).ToArray();
+        Console.WriteLine("Distinct CPU: " + string.Join(", ", distinctCpu));
+        avgCpuMHz = (int)dataFactory.Select(d => d.CpuMHz).Average();
+        var averageUtilizationRate = Math.Round(avgValues.Average() / avgCpuMHz * 100, 2);
+        var peakUtilizationRate = Math.Round(maxValues.Average() / avgCpuMHz * 100, 2);
+        var isUnderutilized = averageUtilizationRate < avgThreshold && peakUtilizationRate < peakThreshold;
+        var distinctIPCs = dataFactory.Select(d => d.IPC).Distinct().ToList();
+
+        var ChartSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Peak Utilization", Data = maxValues },
+            new ChartSeries { Name = "Average Utilization", Data = avgValues }
+        };
+
+        var XAxisLabels = dataFactory
+            .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
+            .ToArray();
+
+        chartDataByFactory.Add(factory, new ChartData 
+        { 
+            Series = ChartSeries, 
+            XAxisLabels = XAxisLabels,
+            AverageUtilizationRate = averageUtilizationRate,
+            PeakUtilizationRate = peakUtilizationRate,
+            IsUnderutilized = isUnderutilized,
+            DistinctCPUs = distinctCpu.Distinct().ToList(),
+            DistinctIPCs = distinctIPCs
+        });
+    }
+}
