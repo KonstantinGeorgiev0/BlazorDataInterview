@@ -13,8 +13,8 @@
         rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
         <br>Peak utilization is shown in blue and average utilization is shown in green.
     </p>
-    <div style="margin: 10px;">
-        <p>Choose a CpuMHz value that you would like to see the chart of</p>
+    <MudPaper Class="pa-2 mt-2 mb-2">
+        <p>Choose a CpuMHz value that you would like to see the chart of:</p>
         <InputSelect class="form-control" id="CPU" style="width:150px"
             @bind-Value="selectedCpuMHz" 
             @onchange="OnCpuSelectionChange">
@@ -23,78 +23,89 @@
                     <option value="@cpu">@cpu</option>
                 }
         </InputSelect>
-    </div>
+    </MudPaper>
 </div>
-
-@if (chartDataByCpuMHz.ContainsKey(selectedCpuMHz))
+@if (isLoading)
 {
-    var cpuMHzData = chartDataByCpuMHz[selectedCpuMHz];
-    <div>
-        <div>
-            <p>Grouped Data based on Maximum CPU MHz: @selectedCpuMHz (average of values is taken for each day)</p>
-            <p>Average Utilization Rate: @cpuMHzData.AverageUtilizationRate%</p>
-            <p>Peak Utilization Rate: @cpuMHzData.PeakUtilizationRate%</p>
-            @if (cpuMHzData.IsUnderutilized)
-            {
-                <p style="color: red;">IPCs sharing Max CpuMHz of @selectedCpuMHz are on average underutilized.</p>
-            }
-            else
-            {
-                <p style="color: green;">IPCs sharing Max CpuMHz of @selectedCpuMHz are on average not underutilized.</p>
-            }
-        </div>
-        <MudChart Class="pa-4 mt-2 d-flex justify-center"
-            ChartType="MudBlazor.ChartType.Line" 
-            ChartSeries="@cpuMHzData.Series" 
-            @bind-SelectedIndex="Index" 
-            XAxisLabels="@cpuMHzData.XAxisLabels" 
-            Width="100%" Height="350" 
-            ChartOptions="@Options"/>
-        
-        <div style="margin: 10px;">
-            <p>Choose an IPC ID that you would like to see the chart of</p>
-            <InputSelect class="form-control" id="IPC" style="width:150px"
-                @bind-Value="selectedIPC" 
-                @onchange="OnIPCSelectionChange">
-                    @foreach (var ipc in IpcValues)
-                    {
-                        <option value="@ipc">@ipc</option>
-                    }
-            </InputSelect>
-        </div>
-    </div>
+    <h3>Loading...</h3>
 }
-
-@if (!string.IsNullOrEmpty(selectedIPC) && chartDataByIPC.ContainsKey(selectedIPC))
+else
 {
-    var ipcData = chartDataByIPC[selectedIPC];
-    <div>
+    @if (chartDataByCpuMHz.ContainsKey(selectedCpuMHz))
+    {
+        var cpuMHzData = chartDataByCpuMHz[selectedCpuMHz];
         <div>
-            <p>Data for IPC ID: @selectedIPC
-                <br>Max CPU MHz: @selectedCpuMHz
-                <br>Average Utilization Rate: @ipcData.AverageUtilizationRate%
-                <br>Peak Utilization Rate: @ipcData.PeakUtilizationRate%
-                <br>@if (ipcData.IsUnderutilized)
+            <div>
+                <p>Grouped Data based on Maximum CPU MHz: @selectedCpuMHz (average of values is taken for each day)</p>
+                <p>Average Utilization Rate: @cpuMHzData.AverageUtilizationRate%</p>
+                <p>Peak Utilization Rate: @cpuMHzData.PeakUtilizationRate%</p>
+                @if (cpuMHzData.IsUnderutilized)
                 {
-                    <span style="color: green;">This IPC is underutilized.</span>
+                    <p style="color: red;">IPCs sharing Max CpuMHz of @selectedCpuMHz are on average underutilized.</p>
                 }
                 else
                 {
-                    <span style="color: red;">This IPC is not underutilized.</span>
+                    <p style="color: green;">IPCs sharing Max CpuMHz of @selectedCpuMHz are on average not underutilized.</p>
                 }
-            </p>
-            <MudChart Class="pa-4 mt-2 d-flex justify-center"
-                ChartType="MudBlazor.ChartType.Line" 
-                ChartSeries="@ipcData.Series" 
-                @bind-SelectedIndex="Index" 
-                XAxisLabels="@ipcData.XAxisLabels" 
-                Width="100%" Height="350" 
-                ChartOptions="@Options"/>
+            </div>
+            <MudPaper Class="mt-2 mb-2">
+                <MudChart
+                    ChartType="MudBlazor.ChartType.Line" 
+                    ChartSeries="@cpuMHzData.Series" 
+                    @bind-SelectedIndex="Index" 
+                    XAxisLabels="@cpuMHzData.XAxisLabels" 
+                    Width="100%" Height="350" 
+                    ChartOptions="@Options"/>
+            </MudPaper>
+                
+            <MudPaper Class="pa-4 mt-2 mb-2">
+                <p>Out of this group, choose an IPC that you would like to see the chart of:</p>
+                <InputSelect class="form-control" id="IPC" style="width:150px"
+                    @bind-Value="selectedIPC" 
+                    @onchange="OnIPCSelectionChange">
+                        @foreach (var ipc in IpcValues)
+                        {
+                            <option value="@ipc">@ipc</option>
+                        }
+                </InputSelect>
+            </MudPaper>
         </div>
-    </div>
+    }
+
+    @if (!string.IsNullOrEmpty(selectedIPC) && chartDataByIPC.ContainsKey(selectedIPC))
+    {
+        var ipcData = chartDataByIPC[selectedIPC];
+        <div>
+            <div>
+                <p>Data for IPC ID: @selectedIPC
+                    <br>Max CPU MHz: @selectedCpuMHz
+                    <br>Average Utilization Rate: @ipcData.AverageUtilizationRate%
+                    <br>Peak Utilization Rate: @ipcData.PeakUtilizationRate%
+                    <br>@if (ipcData.IsUnderutilized)
+                    {
+                        <span style="color: green;">This IPC is underutilized.</span>
+                    }
+                    else
+                    {
+                        <span style="color: red;">This IPC is not underutilized.</span>
+                    }
+                </p>
+                <MudPaper Class="pa-4 mt-2 mb-2">
+                    <MudChart
+                        ChartType="MudBlazor.ChartType.Line" 
+                        ChartSeries="@ipcData.Series" 
+                        @bind-SelectedIndex="Index" 
+                        XAxisLabels="@ipcData.XAxisLabels" 
+                        Width="100%" Height="350" 
+                        ChartOptions="@Options"/>
+                </MudPaper>
+            </div>
+        </div>
+    }
 }
 
 @code {
+    private bool isLoading = true;
     // variables for line chart
     private List<ChartSeries> Series = new List<ChartSeries>();
     private string[] XAxisLabels = Array.Empty<string>();
@@ -117,7 +128,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         await LoadData();
+        isLoading = false;
     }
 
     private async Task LoadData()
