@@ -5,13 +5,20 @@
 @using BlazorInterview.Services
 @inject DataService DataService
 
+<PageTitle>Pie Charts</PageTitle>
+
+<h1>Pie Charts</h1>
+
 <div>
-    <p>Pie Chart showcasing Industrial PC (IPC).
+    <p style="text-align: justify; width: 100%">
+        Pie Chart showcasing Industrial PCs (IPCs) grouped by their Data Factory number.
+        <br>The Pie Chart shows the number of underutilized and not underutilized IPCs for each Data Factory.
         <br>An IPC is considered underutilized if its average utilization 
         rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
+        <br>Average and peak utilization rates are calculated as a percentage of the IPC's CPU MHz.
     </p>
-    <div style="margin: 10px;">
-        <p>Choose a Data Factory number that you would like to see the chart of</p>
+    <div style="margin-top: 5px; margin-bottom: 5px;">
+        <p>Choose a Data Factory number that you would like to see the chart of:</p>
         <InputSelect id="DataFactory" class="form-control" style="width: 200px" 
             @bind-Value="selectedFactory" 
             @onchange="OnFactorySelectionChange">
@@ -31,11 +38,35 @@
         <br>Out of which @facData.UnderutilizedCount are underutilized and @facData.NotUnderutilized are not underutilized.
     </p>
     <MudPaper Class="pa-4 mt-2 d-flex justify-center">
-        <MudChart ChartType="ChartType.Pie" InputData="@facData.Data" @bind-SelectedIndex="Index" InputLabels="@labels" Width="300px" Height="300px" />
+        <MudChart ChartType="ChartType.Pie" InputData="@facData.Data"
+            @bind-SelectedIndex="Index" InputLabels="@labels" Width="300px" Height="300px" />
     </MudPaper>
-    <MudText Typo="Typo.h6">Selected portion of the chart: @(Index >= 0 && Index < labels.Length ? labels[Index] : "None")</MudText>
+    <MudText Typo="Typo.h6">Selected portion of the chart: 
+        @(Index >= 0 && Index < labels.Length ? labels[Index] : "None")
+    </MudText>
 }
 
+<div class="container mt-3 mb-3">    
+    <h3>Distribution of Underutilized IPCs per Data Factory</h3>
+    <MudPaper Class="pa-4 mt-2 d-flex justify-center">
+        <MudChart ChartType="ChartType.Pie" InputData="@data2" 
+            @bind-SelectedIndex="Index2" InputLabels="@labels2" Width="300px" Height="300px" />
+    </MudPaper>
+    <MudText Typo="Typo.h6">
+        Selected portion of the chart: @(Index2 >= 0 && Index2 < labels2.Length ? labels2[Index2] : "None")
+    </MudText>
+</div>
+
+<div class="container mt-3 mb-3">
+    <h3>Distribution of Utilized IPCs per Data Factory</h3>
+    <MudPaper Class="pa-4 mt-2 d-flex justify-center">
+        <MudChart ChartType="ChartType.Pie" InputData="@data3"
+        @bind-SelectedIndex="Index3" InputLabels="@labels2" Width="300px" Height="300px" />
+    </MudPaper>
+    <MudText Typo="Typo.h6">
+        Selected portion of the chart: @(Index3 >= 0 && Index3 < labels2.Length ? labels2[Index3] : "None")
+    </MudText>
+</div>
 @code {
     // Variables for data
     private List<IPCData> IpcData = new List<IPCData>();
@@ -48,6 +79,15 @@
     @* private string[] Index = new string[] { "Not Underutilized", "Underutilized" }; *@
     private Dictionary<int, DataClass> data = new Dictionary<int, DataClass>();
     string[] labels = { "Not Underutilized", "Underutilized"};
+
+    // Variables for pie chart Factory Utilization Distribution
+    private int Index2 = -1;
+    private int Index3 = -1;
+    private List<double> underUtilizedPerFactory = new List<double>(); 
+    private List<double> utilizedPerFactory = new List<double>();
+    private double[] data2 = { 1, 1, 1, 1, 1 };
+    private double[] data3 = { 1, 1, 1, 1, 1 };
+    private string[] labels2 = { "Factory 1", "Factory 2", "Factory 3", "Factory 4", "Factory 5" };
     
     // Variables for input select
     private int selectedFactory { get; set; }
@@ -80,6 +120,9 @@
         {
             LoadPieData(factory);
         }
+        // load variables for pie charts Factory Utilization Distribution
+        data2 = underUtilizedPerFactory.ToArray();
+        data3 = utilizedPerFactory.ToArray();
     }
 
     private void LoadPieData(int selectedFactory)
@@ -103,6 +146,10 @@
         var notUnderutilized = factoryData.Count() - underutilized;
         Console.WriteLine($"Factory: {selectedFactory}, IPCs: {string.Join(", ", uniqueIPCs)}");
         Console.WriteLine($"Not underutilized: {notUnderutilized}, underutilized: {underutilized}");
+
+        // load variables for pie charts Factory Utilization Distribution
+        underUtilizedPerFactory.Add(underutilized);
+        utilizedPerFactory.Add(notUnderutilized);
 
         // load data 
         data[selectedFactory] = new DataClass
