@@ -55,8 +55,8 @@ else
     private List<string> IPCs;
     string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
     private int underutilizedIPCs = 0; 
-    private int averageUtilizationRateThreshold { get; set; } = 10;
-    private int peakUtilizationRateThreshold { get; set; } = 20;
+    public int averageUtilizationRateThreshold { get; set; } = 10;
+    public int peakUtilizationRateThreshold { get; set; } = 20;
 
     protected override async Task OnInitializedAsync()
     {

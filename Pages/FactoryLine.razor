@@ -1,4 +1,4 @@
-﻿@page "/visualization"
+﻿@page "/factory-line"
 @using MudBlazor
 @using MudBlazor.Charts
 @using BlazorInterview.Models
@@ -11,75 +11,59 @@
         rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
         <br>Peak utilization is shown in blue and average utilization is shown in green.
     </p>
-    <div style="margin: 10px;">
+    <MudPaper Class="pa-3 mt-2 mb-2">
         <p>Choose a Data Factory number that you would like to see the chart of</p>
-        <InputSelect id="DataFactory" @bind-Value="selectedFactory" @onchange="OnFactorySelectionChange">
+        <InputSelect class="form-control" style="width: 150px;" id="DataFactory" @bind-Value="selectedFactory" @onchange="OnFactorySelectionChange">
             @foreach (var factory in FactoryValues)
             {
                 <option value="@factory">@factory</option>
             }
         </InputSelect>
-    </div>
+    </MudPaper>
 </div>
 
-@if (chartDataByFactory.ContainsKey(selectedFactory))
+@if (isLoading)
 {
-    var factoryData = chartDataByFactory[selectedFactory];
-    <div>
-        <div>
-            <p>Grouped Data based on Data Factory: @selectedFactory (average of values are taken for each day)
-                <br>Average of CpuMHz values is taken to show the general idea. Data, therefore, is not accurate.
-                <br>Average CpuMHz of Data Factory @selectedFactory: @avgCpuMHz
-                <br>Distinct CpuMHz values: @string.Join(", ", factoryData.DistinctCPUs)
-                <br>Average Utilization Rate: @factoryData.AverageUtilizationRate%
-                <br>Peak Utilization Rate: @factoryData.PeakUtilizationRate%
-            </p>
-            @if (factoryData.IsUnderutilized)
-            {
-                <p style="color: red;">IPCs in Data Factory @selectedFactory are on average underutilized.</p>
-            }
-            else
-            {
-                <p style="color: green;">IPCs in Data Factory @selectedFactory are on average not underutilized.</p>
-            }
-        </div>
-        <MudChart 
-            ChartType="MudBlazor.ChartType.Line" 
-            ChartSeries="@factoryData.Series" 
-            @bind-SelectedIndex="Index" 
-            XAxisLabels="@factoryData.XAxisLabels" 
-            Width="100%" Height="350" 
-            ChartOptions="@Options"/>
-    </div>
+    <h3>Loading...</h3>
 }
-@* @foreach (var factoryData in chartDataByFactory)
-{
-    <div>
+else{
+@if (chartDataByFactory.ContainsKey(selectedFactory))
+    {
+        var factoryData = chartDataByFactory[selectedFactory];
         <div>
-            <p>Grouped Data based on Maximum CPU MHz: @factoryData.Key (average of values is taken for each day)</p>
-            <p>Average Utilization Rate: @factoryData.Value.AverageUtilizationRate%</p>
-            <p>Peak Utilization Rate: @factoryData.Value.PeakUtilizationRate%</p>
-            @if (factoryData.Value.IsUnderutilized)
-            {
-                <p style="color: green;">This IPC is underutilized.</p>
-            }
-            else
-            {
-                <p style="color: red;">This IPC is not underutilized.</p>
-            }
+            <div>
+                <p>Grouped Data based on Data Factory: @selectedFactory (average of values are taken for each day)
+                    <br>Average of CpuMHz values is taken to show the general idea. Data, therefore, is not accurate.
+                    <br>Average CpuMHz of Data Factory @selectedFactory: @avgCpuMHz
+                    <br>Distinct CpuMHz values: @string.Join(", ", factoryData.DistinctCPUs)
+                    <br>Average Utilization Rate: @factoryData.AverageUtilizationRate%
+                    <br>Peak Utilization Rate: @factoryData.PeakUtilizationRate%
+                </p>
+                @if (factoryData.IsUnderutilized)
+                {
+                    <p style="color: red;">IPCs in Data Factory @selectedFactory are on average underutilized.</p>
+                }
+                else
+                {
+                    <p style="color: green;">IPCs in Data Factory @selectedFactory are on average not underutilized.</p>
+                }
+            </div>
+            <MudPaper Class="pa-4 mt-2 mb-2">
+                <MudChart 
+                    ChartType="MudBlazor.ChartType.Line" 
+                    ChartSeries="@factoryData.Series" 
+                    @bind-SelectedIndex="Index" 
+                    XAxisLabels="@factoryData.XAxisLabels" 
+                    Width="100%" Height="350" 
+                    ChartOptions="@Options"/>
+            </MudPaper>
         </div>
-        <MudChart 
-            ChartType="MudBlazor.ChartType.Line" 
-            ChartSeries="@factoryData.Value.Series" 
-            @bind-SelectedIndex="Index" 
-            XAxisLabels="@factoryData.Value.XAxisLabels" 
-            Width="100%" Height="350" 
-            ChartOptions="@Options"/>
-    </div>
-} *@
+    }
+}
 
 @code 
 {
+    private bool isLoading = true;
     // variables for line chart
     private List<ChartSeries> Series = new List<ChartSeries>();
     private string[] XAxisLabels = Array.Empty<string>();
@@ -92,7 +76,7 @@
     private List<IPCData> IPCData = new List<IPCData>();
     private List<IPCData> selectedData = new List<IPCData>();
     private int avgThreshold = 10;
-    private int peakThreshold = 15;
+    private int peakThreshold = 20;
     private int avgCpuMHz = 0;
 
     // variables for input select
@@ -101,7 +85,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
         await LoadData();
+        isLoading = false;
     }
 
     private async Task LoadData()
