@@ -9,7 +9,7 @@
 
 <div>
     <p>Line Chart showcasing Industrial PC (IPC).
-        <br>An IPC is considered underutilized if its average utilization 
+        <br>An IPC is considered underutilized if its average utilization
         rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
         <br>Peak utilization is shown in blue and average utilization is shown in green.
     </p>
@@ -23,7 +23,7 @@ else
     <MudPaper Class="pa-3 mt-2 mb-2">
         <p>Choose a CpuMHz value that you would like to see the chart of:</p>
         <InputSelect class="form-control" id="CPU" style="width:150px"
-            @bind-Value="selectedCpuMHz" 
+            @bind-Value="selectedCpuMHz"
             @onchange="OnCpuSelectionChange">
                 @foreach (var cpu in CpuMHzValues)
                 {
@@ -50,24 +50,32 @@ else
             </div>
             <MudPaper Class="pa-4 mt-2 mb-2">
                 <MudChart
-                    ChartType="MudBlazor.ChartType.Line" 
-                    ChartSeries="@cpuMHzData.Series" 
-                    @bind-SelectedIndex="Index" 
-                    XAxisLabels="@cpuMHzData.XAxisLabels" 
-                    Width="100%" Height="350" 
+                    ChartType="MudBlazor.ChartType.Line"
+                    ChartSeries="@cpuMHzData.Series"
+                    @bind-SelectedIndex="Index"
+                    XAxisLabels="@cpuMHzData.XAxisLabels"
+                    Width="100%" Height="350"
                     ChartOptions="@Options"/>
             </MudPaper>
         </div>
     }
 
     <MudPaper Class="pa-3 mt-2 mb-2">
+        <MudSwitch @bind-Checked="@highOrLow" Label="Lowest/ Highest Values" Color="Color.Primary" />
         <p>
-            Input an IPC that you would like to see the chart of:
-            <br>You can look them up in the Home page.
+            This is a list of IPCs that are considered underutilized based on the average and peak utilization rates.
+            <br>The IPCs are selected based on the @(highOrLow ? "highest" : "lowest") average and peak utilization rates.
+            <br>This is done to show how these IPCs may influence the overall utilization rate.
+            <br>Input an IPC that you would like to see the chart of:
         </p>
-        <MudTextField @bind-Value="selectedIPC" @onchange="OnIPCSelectionChange" 
-            Label="IPC" Variant="Variant.Text">
-        </MudTextField>
+        <InputSelect class="form-control" id="IPC" style="width:150px"
+            @bind-Value="selectedIPC"
+            @onchange="OnIPCSelectionChange">
+                @foreach (var ipc in (highOrLow ? IpcValuesMax : IpcValuesMin))
+                {
+                    <option value="@ipc">@ipc</option>
+                }
+        </InputSelect>
     </MudPaper>
 
     @if (!string.IsNullOrEmpty(selectedIPC) && chartDataByIPC.ContainsKey(selectedIPC))
@@ -90,11 +98,11 @@ else
                 </p>
                 <MudPaper Class="pa-4 mt-2 mb-2">
                     <MudChart
-                        ChartType="MudBlazor.ChartType.Line" 
-                        ChartSeries="@ipcData.Series" 
-                        @bind-SelectedIndex="Index" 
-                        XAxisLabels="@ipcData.XAxisLabels" 
-                        Width="100%" Height="350" 
+                        ChartType="MudBlazor.ChartType.Line"
+                        ChartSeries="@ipcData.Series"
+                        @bind-SelectedIndex="Index"
+                        XAxisLabels="@ipcData.XAxisLabels"
+                        Width="100%" Height="350"
                         ChartOptions="@Options"/>
                 </MudPaper>
             </div>
@@ -104,6 +112,7 @@ else
 
 @code {
     private bool isLoading = true;
+    private bool highOrLow = false;
     // variables for line chart
     private List<ChartSeries> Series = new List<ChartSeries>();
     private string[] XAxisLabels = Array.Empty<string>();
@@ -123,6 +132,8 @@ else
     private List<int> CpuMHzValues = new List<int>();
     public string selectedIPC { get; set; } = string.Empty;
     private List<string> IpcValues = new List<string>();
+    private List<string> IpcValuesMin = new List<string>();
+    private List<string> IpcValuesMax = new List<string>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -137,7 +148,7 @@ else
         // Group data by value of CPU MHz, then by date, and take averages of avg and max Values for each day
         var groupedDataCpu = IPCData
             .GroupBy(d => d.CpuMHz)
-            .SelectMany(cpuGroup => 
+            .SelectMany(cpuGroup =>
                 cpuGroup.GroupBy(g => g.Time.Date)
                     .Select(dateGroup => new IPCData
                     {
@@ -150,7 +161,8 @@ else
             )
             .ToList();
 
-        @* var groupedDataIpc = IPCData
+        // Group data by IPC, then take averages of avg and max values for each IPC
+        var groupedDataIpc = IPCData
             .GroupBy(d => d.IPC)
             .Select(ipcGroup => new IPCData
                 {
@@ -159,10 +171,32 @@ else
                     MaxValue = ipcGroup.Average(d => d.MaxValue),
                     CpuMHz = ipcGroup.Select(d => d.CpuMHz).FirstOrDefault()
                 })
-            .ToList(); *@
+            .ToList();
 
         CpuMHzValues = IPCData.Select(d => d.CpuMHz).Distinct().ToList();
-        IpcValues = IPCData.Select(d => d.IPC).Distinct().ToList();
+        // Select the first 20 IPCs with the lowest average AvgValue and MaxValue
+        IpcValuesMin = groupedDataIpc
+            .OrderBy(ipc => ipc.AvgValue)
+            .ThenBy(ipc => ipc.MaxValue)
+            .Take(20)
+            .Select(ipc => ipc.IPC)
+            .ToList();
+        IpcValuesMax = groupedDataIpc
+            .OrderByDescending(ipc => ipc.AvgValue)
+            .ThenByDescending(ipc => ipc.MaxValue)
+            .Take(20)
+            .Select(ipc => ipc.IPC)
+            .ToList();
+        var IpcValuesRandom = groupedDataIpc
+            .Select(ipc => ipc.IPC)    
+            .Take(20)
+            .ToList();
+
+        IpcValues = IpcValuesMin
+            .Union(IpcValuesMax)
+            .Union(IpcValuesRandom)
+            .Distinct()
+            .ToList();
         Console.WriteLine($"Count of IPC: {IpcValues.Count()}");
 
         foreach (var cpuMHz in CpuMHzValues)
@@ -171,10 +205,10 @@ else
         }
         selectedCpuMHz = CpuMHzValues.FirstOrDefault(); // set initial selected value
 
-        @* foreach (var ipc in IpcValues)
+        foreach (var ipc in IpcValues)
         {
             LoadIpcChartData(ipc);
-        } *@
+        }
         selectedIPC = IpcValues.FirstOrDefault(); // set initial selected value
     }
 
@@ -198,9 +232,9 @@ else
             .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
             .ToArray();
 
-        chartDataByCpuMHz.Add(cpuMHz, new ChartData 
-        { 
-            Series = ChartSeries, 
+        chartDataByCpuMHz.Add(cpuMHz, new ChartData
+        {
+            Series = ChartSeries,
             XAxisLabels = XAxisLabels,
             AverageUtilizationRate = averageUtilizationRate,
             PeakUtilizationRate = peakUtilizationRate,
@@ -230,9 +264,9 @@ else
             .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
             .ToArray();
 
-        chartData.Add(key, new ChartData 
-        { 
-            Series = ChartSeries, 
+        chartData.Add(key, new ChartData
+        {
+            Series = ChartSeries,
             XAxisLabels = XAxisLabels,
             AverageUtilizationRate = Math.Round(avgUtilization, 2),
             PeakUtilizationRate = Math.Round(maxUtilization, 2),
@@ -263,9 +297,9 @@ else
             .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
             .ToArray();
 
-        chartDataByIPC.Add(ipcId, new ChartData 
-        { 
-            Series = ChartSeries, 
+        chartDataByIPC.Add(ipcId, new ChartData
+        {
+            Series = ChartSeries,
             XAxisLabels = XAxisLabels,
             AverageUtilizationRate = Math.Round(avgUtilization, 2),
             PeakUtilizationRate = Math.Round(maxUtilization, 2),
