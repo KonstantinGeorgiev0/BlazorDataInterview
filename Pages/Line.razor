@@ -63,7 +63,7 @@ else
     <MudPaper Class="pa-3 mt-2 mb-2">
         <MudSwitch @bind-Checked="@highOrLow" Label="Lowest/ Highest Values" Color="Color.Primary" />
         <p>
-            This is a list of IPCs that are considered underutilized based on the average and peak utilization rates.
+            This is a list of IPCs that are considered @(highOrLow ? "not" : "") underutilized based on the average and peak utilization rates.
             <br>The IPCs are selected based on the @(highOrLow ? "highest" : "lowest") average and peak utilization rates.
             <br>This is done to show how these IPCs may influence the overall utilization rate.
             <br>Input an IPC that you would like to see the chart of:
@@ -178,18 +178,18 @@ else
         IpcValuesMin = groupedDataIpc
             .OrderBy(ipc => ipc.AvgValue)
             .ThenBy(ipc => ipc.MaxValue)
-            .Take(20)
+            .Take(30)
             .Select(ipc => ipc.IPC)
             .ToList();
         IpcValuesMax = groupedDataIpc
             .OrderByDescending(ipc => ipc.AvgValue)
             .ThenByDescending(ipc => ipc.MaxValue)
-            .Take(20)
+            .Take(30)
             .Select(ipc => ipc.IPC)
             .ToList();
         var IpcValuesRandom = groupedDataIpc
             .Select(ipc => ipc.IPC)    
-            .Take(20)
+            .Take(30)
             .ToList();
 
         IpcValues = IpcValuesMin
@@ -317,7 +317,6 @@ else
     private void OnIPCSelectionChange(ChangeEventArgs e)
     {
         selectedIPC = e.Value.ToString();
-        LoadIpcChartData(selectedIPC);
         StateHasChanged();
     }
 
