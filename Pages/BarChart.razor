@@ -1,0 +1,117 @@
+@page "/barchart"
+@using MudBlazor
+@using MudBlazor.Charts
+@using BlazorInterview.Models
+@using BlazorInterview.Services
+@inject DataService DataService
+
+<h3>Bar Charts</h3>
+@if (isLoading)
+{
+    <h4>Loading...</h4>
+}
+else 
+{
+    <MudPaper Class="pa-3 mb-2">
+        <p>
+            Stacked Bar Chart showcasing the number of underutilized and utilized IPCs for each Data Factory.
+            <br>Numbers are scaled down by a factor of 10 for better visualization.
+        </p>
+        <MudChart ChartType="ChartType.StackedBar" @bind-SelectedIndex="Index" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="450px">
+            <CustomGraphics>
+                <style>
+                    .heavy { font: bold 30px Helvetica; }
+                    .Rrrrr { font: italic 40px Helvetica; fill: rgb(62,44,221); }
+                </style>
+            </CustomGraphics>
+        </MudChart>
+
+        <MudText Typo="Typo.h6">Selected portion of the chart: @(Index == 0 ? "Underutilized" : "Utilized")</MudText>
+    </MudPaper>
+}
+
+@code {
+    private bool isLoading = true;
+
+    // Variables for data
+    private List<IPCData> IpcData = new List<IPCData>();
+    private int avgThreshold = 10;
+    private int peakThreshold = 20;
+    private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
+
+
+    // Variables for bar chart Factory Utilization Distribution
+    private int Index = -1;
+    private List<double> underUtilizedPerFactory = new List<double>(); 
+    private List<double> utilizedPerFactory = new List<double>();
+    private double[] dataUtilized = new double[] { 1, 1, 1, 1, 1 };
+    private double[] dataUnderutilized = new double[] { 1, 1, 1, 1, 1 };
+    private double utilizedTotal = 0;
+    private double underutilizedTotal = 0;
+    public List<ChartSeries> Series = new List<ChartSeries>();
+    public string[] XAxisLabels = { "Factory 1", "Factory 2", "Factory 3", "Factory 4", "Factory 5" };
+    
+    // Variables for input select
+    private List<int> FactoryValues = new List<int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        await LoadData();
+        isLoading = false;
+    }
+
+    private async Task LoadData()
+    {
+        IpcData = await DataService.LoadDataAsync(csvFilePath);
+
+        // Get unique factory values
+        FactoryValues = IpcData.Select(d => d.DataFactory).Distinct().ToList();
+        // Calculate total number of underutilized IPCs per Data Factory
+        foreach (var factory in FactoryValues)
+        {
+            LoadBarData(factory);
+        }
+        dataUnderutilized = underUtilizedPerFactory.ToArray();
+        dataUtilized = utilizedPerFactory.ToArray();
+        Console.WriteLine($"Underutilized: {string.Join(", ", dataUnderutilized)}");
+        Console.WriteLine($"Utilized: {string.Join(", ", dataUtilized)}");
+        Series = new List<ChartSeries>()
+        {
+            new ChartSeries() { Name = "Underutilized", Data = dataUnderutilized },
+            new ChartSeries() { Name = "Utilized", Data = dataUtilized }
+        };
+    }
+    /// <summary>
+    /// Populate data for bar chart. Take number of underutilized and utilized per each Data Factory.
+    /// Store that in ChartSeries Underutilized and Utilized, respectively. 
+    /// </summary>
+    /// <param name="selectedFactory"></param>
+    private void LoadBarData(int selectedFactory)
+    {
+        // Group data by Data Factory and IPC, then take averages of avg and max Values
+        var factoryData = IpcData
+            .Where(d => d.DataFactory == selectedFactory)
+            .GroupBy(d => d.IPC)
+            .Select(ipcGroup => new 
+            {
+                IPC = ipcGroup.Key,
+                AvgValue = ipcGroup.Average(d => d.AvgValue),
+                MaxValue = ipcGroup.Average(d => d.MaxValue),
+                CpuMHz = ipcGroup.Select(d => d.CpuMHz).FirstOrDefault()
+            })
+            .ToList();
+
+        var uniqueIPCs = factoryData.Select(d => d.IPC).Distinct().ToList().Count();
+        var underutilized = (factoryData.Count(d => d.AvgValue / d.CpuMHz * 100 < avgThreshold && d.MaxValue / d.CpuMHz * 100 < peakThreshold)) / 10;
+        var notUnderutilized = factoryData.Count() / 10 - underutilized;
+        Console.WriteLine($"Factory: {selectedFactory}, IPCs: {string.Join(", ", uniqueIPCs)}");
+        Console.WriteLine($"Not underutilized: {notUnderutilized}, underutilized: {underutilized}");
+
+        // load variables for bar charts Factory Utilization Distribution
+        underUtilizedPerFactory.Add(underutilized);
+        underutilizedTotal += underutilized;
+        utilizedPerFactory.Add(notUnderutilized);
+        utilizedTotal += notUnderutilized;
+    }
+}
