@@ -13,6 +13,7 @@
         rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
         <br>Peak utilization is shown in blue and average utilization is shown in green.
     </p>
+    <h3>Line Chart of IPCs grouped by their CpuMHz values.</h3>
 </div>
 @if (isLoading)
 {
@@ -61,12 +62,27 @@ else
     }
 
     <MudPaper Class="pa-3 mt-2 mb-2">
-        <MudSwitch @bind-Checked="@highOrLow" Label="Lowest/ Highest Values" Color="Color.Primary" />
+        <h3>Line Chart of IPCs with
+            <span style="color: @(highOrLow ? "green" : "red");">
+                @(highOrLow ? "Highest" : "Lowest")
+            </span> 
+            values.
+        </h3>
+        <h5 style="color: grey;">Use the switch to change between the lowest and highest values.</h5>
+        <MudSwitch @bind-Value="@highOrLow" Label="Lowest/ Highest Values" Color="Color.Primary" />
         <p>
-            This is a list of IPCs that are considered @(highOrLow ? "not" : "") underutilized based on the average and peak utilization rates.
-            <br>The IPCs are selected based on the @(highOrLow ? "highest" : "lowest") average and peak utilization rates.
+            This is a list of IPCs that are considered 
+            <span style="color: @(highOrLow ? "green" : "red");">
+                @(highOrLow ? "not underutilized" : "underutilized")
+            </span>
+            based on the average and peak utilization rates.
+            <br>The IPCs are selected based on the 
+            <span style="color: @(highOrLow ? "green" : "red");">
+                @(highOrLow ? "highest" : "lowest")
+            </span>
+            average and peak utilization rates.
             <br>This is done to show how these IPCs may influence the overall utilization rate.
-            <br>Input an IPC that you would like to see the chart of:
+            <br>Select an IPC that you would like to see the chart of:
         </p>
         <InputSelect class="form-control" id="IPC" style="width:150px"
             @bind-Value="selectedIPC"
@@ -89,11 +105,11 @@ else
                     <br>Peak Utilization Rate: @ipcData.PeakUtilizationRate%
                     <br>@if (ipcData.IsUnderutilized)
                     {
-                        <span style="color: green;">This IPC is underutilized.</span>
+                        <span style="color: red;">This IPC is underutilized.</span>
                     }
                     else
                     {
-                        <span style="color: red;">This IPC is not underutilized.</span>
+                        <span style="color: green;">This IPC is not underutilized.</span>
                     }
                 </p>
                 <MudPaper Class="pa-4 mt-2 mb-2">
@@ -109,6 +125,8 @@ else
         </div>
     }
 }
+
+<FactoryLine/>
 
 @code {
     private bool isLoading = true;
@@ -142,6 +160,7 @@ else
         isLoading = false;
     }
 
+    // Load data from the CSV file
     private async Task LoadData()
     {
         IPCData = await DataService.LoadDataAsync(csvFilePath);
@@ -187,14 +206,9 @@ else
             .Take(30)
             .Select(ipc => ipc.IPC)
             .ToList();
-        var IpcValuesRandom = groupedDataIpc
-            .Select(ipc => ipc.IPC)    
-            .Take(30)
-            .ToList();
 
         IpcValues = IpcValuesMin
             .Union(IpcValuesMax)
-            .Union(IpcValuesRandom)
             .Distinct()
             .ToList();
         Console.WriteLine($"Count of IPC: {IpcValues.Count()}");
@@ -212,6 +226,7 @@ else
         selectedIPC = IpcValues.FirstOrDefault(); // set initial selected value
     }
 
+    // Load data for the selected CPU MHz
     private void LoadCpuChartData(List<IPCData> groupedData, int cpuMHz)
     {
         var dataCpuMhz = groupedData.Where(d => d.CpuMHz == cpuMHz).ToList();
@@ -274,19 +289,23 @@ else
         });
     } *@
 
+    // Load data for the selected IPC
     private void LoadIpcChartData(string ipcId)
     {
+        // Take data for the selected IPC, order by time
         var ipcData = IPCData
             .Where(d => d.IPC.Trim().Equals(ipcId))
             .OrderBy(d => d.Time)
             .ToList();
 
+        // Load values for the selected IPC
         var maxValues = ipcData.Select(d => d.MaxValue).ToArray();
         var avgValues = ipcData.Select(d => d.AvgValue).ToArray();
         var cpuMHz = ipcData.Select(d => d.CpuMHz).FirstOrDefault();
         var avgUtilization = avgValues.Average() / cpuMHz * 100;
         var maxUtilization = maxValues.Average() / cpuMHz * 100;
 
+        // Create chart series and x-axis labels
         var ChartSeries = new List<ChartSeries>
         {
             new ChartSeries { Name = "Peak Utilization", Data = maxValues },
@@ -297,6 +316,7 @@ else
             .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
             .ToArray();
 
+        // Add chart data to dictionary
         chartDataByIPC.Add(ipcId, new ChartData
         {
             Series = ChartSeries,
@@ -308,18 +328,21 @@ else
         });
     }
 
+    // handle selection change event for the CPU input select
     private void OnCpuSelectionChange(ChangeEventArgs e)
     {
         selectedCpuMHz = int.Parse(e.Value.ToString());
         StateHasChanged();
     }
 
+    // handle selection change event for the IPC input select
     private void OnIPCSelectionChange(ChangeEventArgs e)
     {
         selectedIPC = e.Value.ToString();
         StateHasChanged();
     }
 
+    // class to store chart data
     private class ChartData
     {
         public List<ChartSeries> Series { get; set; }

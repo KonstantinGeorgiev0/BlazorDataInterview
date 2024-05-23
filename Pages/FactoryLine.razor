@@ -5,32 +5,27 @@
 @using BlazorInterview.Services
 @inject DataService DataService
 
-<div>
-    <p>Line Chart showcasing Industrial PC (IPC).
-        <br>An IPC is considered underutilized if its average utilization 
-        rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
-        <br>Peak utilization is shown in blue and average utilization is shown in green.
-    </p>
-    <MudPaper Class="pa-3 mt-2 mb-2">
-        <p>Choose a Data Factory number that you would like to see the chart of</p>
-        <InputSelect class="form-control" style="width: 150px;" id="DataFactory" @bind-Value="selectedFactory" @onchange="OnFactorySelectionChange">
-            @foreach (var factory in FactoryValues)
-            {
-                <option value="@factory">@factory</option>
-            }
-        </InputSelect>
-    </MudPaper>
-</div>
+<h3>Line Chart of IPCs grouped by their Data Factory.</h3>
 
 @if (isLoading)
 {
     <h3>Loading...</h3>
 }
-else{
-@if (chartDataByFactory.ContainsKey(selectedFactory))
+else
+{
+    @if (chartDataByFactory.ContainsKey(selectedFactory))
     {
         var factoryData = chartDataByFactory[selectedFactory];
         <div>
+            <MudPaper Class="pa-3 mt-2 mb-2">
+                <p>Choose a Data Factory number that you would like to see the chart of</p>
+                <InputSelect class="form-control" style="width: 150px;" id="DataFactory" @bind-Value="selectedFactory" @onchange="OnFactorySelectionChange">
+                    @foreach (var factory in FactoryValues)
+                    {
+                        <option value="@factory">@factory</option>
+                    }
+                </InputSelect>
+            </MudPaper>
             <div>
                 <p>Grouped Data based on Data Factory: @selectedFactory (average of values are taken for each day)
                     <br>Average of CpuMHz values is taken to show the general idea. Data, therefore, is not accurate.
@@ -53,7 +48,7 @@ else{
                     ChartType="MudBlazor.ChartType.Line" 
                     ChartSeries="@factoryData.Series" 
                     @bind-SelectedIndex="Index" 
-                    XAxisLabels="@factoryData.XAxisLabels" 
+                    XAxisLabels="@XAxisLabels" 
                     Width="100%" Height="350" 
                     ChartOptions="@Options"/>
             </MudPaper>
@@ -118,6 +113,17 @@ else{
         {
             LoadFactoryChartData(groupedData, factory);
         }
+        // set default selected factory
+        selectedFactory = FactoryValues.FirstOrDefault();
+
+        var ipcData = IPCData
+            .Where(d => d.IPC.Equals("ITLT4301"))
+            .OrderBy(d => d.Time)
+            .ToList();
+
+        XAxisLabels = ipcData
+            .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
+            .ToArray();
     }
     private class ChartData
     {
@@ -139,8 +145,7 @@ else{
         var dataFactory = groupedData.Where(d => d.DataFactory == factory).ToList();
         var maxValues = dataFactory.Select(d => d.MaxValue).ToArray();
         var avgValues = dataFactory.Select(d => d.AvgValue).ToArray();
-        var distinctCpu = dataFactory.Select(d => d.CpuMHz).ToArray();
-        Console.WriteLine("Distinct CPU: " + string.Join(", ", distinctCpu));
+        var distinctCpu = dataFactory.Select(d => d.CpuMHz).Distinct().ToList();
         avgCpuMHz = (int)dataFactory.Select(d => d.CpuMHz).Average();
         var averageUtilizationRate = Math.Round(avgValues.Average() / avgCpuMHz * 100, 2);
         var peakUtilizationRate = Math.Round(maxValues.Average() / avgCpuMHz * 100, 2);
@@ -153,18 +158,13 @@ else{
             new ChartSeries { Name = "Average Utilization", Data = avgValues }
         };
 
-        var XAxisLabels = dataFactory
-            .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
-            .ToArray();
-
         chartDataByFactory.Add(factory, new ChartData 
         { 
             Series = ChartSeries, 
-            XAxisLabels = XAxisLabels,
             AverageUtilizationRate = averageUtilizationRate,
             PeakUtilizationRate = peakUtilizationRate,
             IsUnderutilized = isUnderutilized,
-            DistinctCPUs = distinctCpu.Distinct().ToList(),
+            DistinctCPUs = distinctCpu,
             DistinctIPCs = distinctIPCs
         });
     }
