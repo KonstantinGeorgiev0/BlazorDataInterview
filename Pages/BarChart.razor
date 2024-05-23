@@ -114,14 +114,15 @@ else
             new ChartSeries() { Name = "Utilized", Data = dataUtilized },
             new ChartSeries() { Name = "Total", Data = dataTotal }
         };
-        // create a copy of and divide every element of dataUnderutilized and dataUtilized by 10 for better visualization
-        var dataUnderutilized2 = dataUnderutilized.Select(d => d / 10).ToArray();
-        var dataUtilized2 = dataUtilized.Select(d => d / 10).ToArray();
+        // Scale down data for visualization
+        var scaledDataUnderutilized = dataUnderutilized.Select(d => d / 10).ToArray();
+        var scaledDataUtilized = dataUtilized.Select(d => d / 10).ToArray();
 
+        // Create series for stacked bar chart
         Series = new List<ChartSeries>()
         {
-            new ChartSeries() { Name = "Underutilized", Data = dataUnderutilized2 },
-            new ChartSeries() { Name = "Utilized", Data = dataUtilized2 }
+            new ChartSeries() { Name = "Underutilized", Data = scaledDataUnderutilized },
+            new ChartSeries() { Name = "Utilized", Data = scaledDataUtilized }
         };
     }
 
