@@ -25,29 +25,30 @@ else
                 </style>
             </CustomGraphics>
         </MudChart>
-
-        <p>Choose a Data Factory to see additional data</p>
-        <InputSelect class="form-control" style="width: 150px;" id="DataFactory" @bind-Value="SelectedFactory" @onchange="OnFactorySelectionChange">
-            @foreach (var factory in FactoryValues)
+        <div class="d-flex flex-column align-items-center justify-content-center">
+            <p>Choose a Data Factory to see additional data</p>
+            <InputSelect class="form-control" style="width: 150px;" id="DataFactory" @bind-Value="SelectedFactory" @onchange="OnFactorySelectionChange">
+                @foreach (var factory in FactoryValues)
+                {
+                    <option value="@factory">@factory</option>
+                }
+            </InputSelect>
+            @if (SelectedFactory > 0)
             {
-                <option value="@factory">@factory</option>
+                <MudText Class="text-center" Typo="Typo.h6">
+                    Data @XAxisLabels[SelectedFactory - 1] <br>
+                    Utilized IPCs: @dataUtilized[SelectedFactory - 1] <br>
+                    Underutilized IPCs: @dataUnderutilized[SelectedFactory - 1]
+                </MudText>
             }
-        </InputSelect>
-
-        @if (SelectedFactory > 0)
-        {
-            <MudText Typo="Typo.h6">
-                Data @XAxisLabels[SelectedFactory - 1] <br>
-                Utilized IPCs: @dataUtilized[SelectedFactory - 1] <br>
-                Underutilized IPCs: @dataUnderutilized[SelectedFactory - 1]
-            </MudText>
-        }
+        </div>
+        
     </MudPaper>
 
     <MudPaper Class="pa-3 mb-2">
-        <p>
+        <h4>
             Bar Chart showcasing the number of underutilized, utilized, and total number of IPCs for each Data Factory.
-        </p>
+        </h4>
         <MudChart ChartType="ChartType.Bar" ChartSeries="@SeriesBar" XAxisLabels="@XAxisLabels" Width="100%" Height="450px">
             <CustomGraphics>
                 <style>
@@ -145,14 +146,10 @@ else
             .ToList();
 
         var uniqueIPCs = factoryData.Select(d => d.IPC).Distinct().ToList().Count();
-        @* var underutilized = (factoryData.Count(d => d.AvgValue / d.CpuMHz * 100 < avgThreshold && d.MaxValue / d.CpuMHz * 100 < peakThreshold)) / 10;
-        var notUnderutilized = factoryData.Count() / 10 - underutilized; *@
         var underutilized = factoryData
             .Count(d => d.AvgValue / d.CpuMHz * 100 < avgThreshold &&
                 d.MaxValue / d.CpuMHz * 100 < peakThreshold);
         var notUnderutilized = factoryData.Count() - underutilized;
-        Console.WriteLine($"Factory: {selectedFactory}, IPCs: {string.Join(", ", uniqueIPCs)}");
-        Console.WriteLine($"Not underutilized: {notUnderutilized}, underutilized: {underutilized}");
 
         // load variables for bar charts Factory Utilization Distribution
         underUtilizedPerFactory.Add(underutilized);
