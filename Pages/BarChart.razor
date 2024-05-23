@@ -17,7 +17,7 @@ else
             Stacked Bar Chart showcasing the number of underutilized and utilized IPCs for each Data Factory.
             <br>Numbers are scaled down by a factor of 10 for better visualization.
         </p>
-        <MudChart ChartType="ChartType.StackedBar" @bind-SelectedIndex="Index" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="450px">
+        <MudChart ChartType="ChartType.StackedBar" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="450px">
             <CustomGraphics>
                 <style>
                     .heavy { font: bold 30px Helvetica; }
@@ -26,7 +26,22 @@ else
             </CustomGraphics>
         </MudChart>
 
-        <MudText Typo="Typo.h6">Selected portion of the chart: @(Index == 0 ? "Underutilized" : "Utilized")</MudText>
+        <p>Choose a Data Factory to see additional data</p>
+        <InputSelect class="form-control" style="width: 150px;" id="DataFactory" @bind-Value="SelectedFactory" @onchange="OnFactorySelectionChange">
+            @foreach (var factory in FactoryValues)
+            {
+                <option value="@factory">@factory</option>
+            }
+        </InputSelect>
+
+        @if (SelectedFactory > 0)
+        {
+            <MudText Typo="Typo.h6">
+                Data @XAxisLabels[SelectedFactory - 1] <br>
+                Utilized IPCs: @(dataUtilized[SelectedFactory - 1] * 10) <br>
+                Underutilized IPCs: @(dataUnderutilized[SelectedFactory - 1] * 10)
+            </MudText>
+        }
     </MudPaper>
 }
 
@@ -39,9 +54,8 @@ else
     private int peakThreshold = 20;
     private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
 
-
     // Variables for bar chart Factory Utilization Distribution
-    private int Index = -1;
+    private int SelectedFactory = 0;
     private List<double> underUtilizedPerFactory = new List<double>(); 
     private List<double> utilizedPerFactory = new List<double>();
     private double[] dataUtilized = new double[] { 1, 1, 1, 1, 1 };
@@ -50,7 +64,7 @@ else
     private double underutilizedTotal = 0;
     public List<ChartSeries> Series = new List<ChartSeries>();
     public string[] XAxisLabels = { "Factory 1", "Factory 2", "Factory 3", "Factory 4", "Factory 5" };
-    
+
     // Variables for input select
     private List<int> FactoryValues = new List<int>();
 
@@ -82,6 +96,7 @@ else
             new ChartSeries() { Name = "Utilized", Data = dataUtilized }
         };
     }
+
     /// <summary>
     /// Populate data for bar chart. Take number of underutilized and utilized per each Data Factory.
     /// Store that in ChartSeries Underutilized and Utilized, respectively. 
@@ -113,5 +128,10 @@ else
         underutilizedTotal += underutilized;
         utilizedPerFactory.Add(notUnderutilized);
         utilizedTotal += notUnderutilized;
+    }
+    private void OnFactorySelectionChange(ChangeEventArgs e)
+    {
+        SelectedFactory = Convert.ToInt32(e.Value);
+        StateHasChanged();
     }
 }
