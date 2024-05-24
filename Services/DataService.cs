@@ -2,6 +2,7 @@ using BlazorInterview.Models;
 using CsvHelper;
 using CsvHelper.Configuration;
 using System.Globalization;
+using System.Reflection;
 
 namespace BlazorInterview.Services
 {
@@ -35,6 +36,7 @@ namespace BlazorInterview.Services
                 // Use get request to get the csv file
                 var csvData = await _httpClient.GetStreamAsync(csvFilePath);
                 using var reader = new StreamReader(csvData);
+                // Configure the CsvReader
                 var config = new CsvConfiguration(CultureInfo.GetCultureInfo("fr-FR"))
                 {
                     HasHeaderRecord = true,
@@ -45,18 +47,26 @@ namespace BlazorInterview.Services
                     BadDataFound = null,
                     PrepareHeaderForMatch = args => args.Header.ToLower(),
                 };
+                // Read the CSV data using CsvReader
                 using CsvReader csv = new(reader, config);
+                // Register the IPCDataMap class map
                 csv.Context.RegisterClassMap<IPCDataMap>();
+                // Parse the CSV data into a list of IPCData objects
                 listOfIpcData = csv.GetRecords<IPCData>().ToList();
+                // Check if all the IPCData objects in the list have the same MetricID
+                if (!CheckMetricIDs(listOfIpcData))
+                {
+                    throw new Exception("The CSV file contains data with different MetricIDs.");
+                }
+                // Normalize the CpuMHz values for each IPCData object in the list
                 NormalizeCpuMHz(listOfIpcData);
-                // var uniqueIPCs = listOfIpcData.Select(x => x.IPC).Distinct().ToList();
-                // Console.WriteLine($"Unique IPCs: {uniqueIPCs.Count}");
+                // Remove IPCData objects with missing data from the list
                 listOfIpcData = RemoveMissingData(listOfIpcData);
-                // var uniqueIPCsAfter = listOfIpcData.Select(d => d.IPC).Distinct().ToList();
-                // Console.WriteLine($"Unique IPCs after: {uniqueIPCsAfter.Count}");
-                // find the unique IPCs that were removed
-                if (CheckForMissingData(listOfIpcData)) {
-                    throw new Exception("Missing data in the CSV file.");
+                // Remove IPCs that have less than 20 data records
+                listOfIpcData = RemoveIPCsBasedOnTimePeriod(listOfIpcData, 20);
+                // Check if any of the IPCData objects in the list have incorrect data
+                if (CheckForWrongData(listOfIpcData)) {
+                    throw new Exception("Incorrect data in the CSV file.");
                 } 
             }
             catch (Exception ex)
@@ -68,9 +78,9 @@ namespace BlazorInterview.Services
         }
 
         /// <summary>
-        /// Checks if any of the IPCData objects in the list have missing data.
+        /// Checks if any of the IPCData objects in the list have incorrect data.
         /// </summary>
-        public static bool CheckForMissingData(List<IPCData> ipcData)
+        public static bool CheckForWrongData(List<IPCData> ipcData)
         {
             return ipcData.Any(x =>
                 string.IsNullOrEmpty(x.IPC) ||
@@ -100,10 +110,32 @@ namespace BlazorInterview.Services
                 x.MinValue > 0
             ).ToList();
 
-            // var removedIPCs = originalData.Except(cleanedData).Select(x => x.IPC).Distinct().ToList();
-            // Console.WriteLine($"Removed IPCs: {string.Join(", ", removedIPCs)}");
-
             return cleanedData;
+        }
+
+        /// <summary>
+        /// Remove IPCs that have less than minTime data records.
+        /// </summary>
+        public static List<IPCData> RemoveIPCsBasedOnTimePeriod(List<IPCData> ipcData, int minTime)
+        {
+            // group the data by IPC
+            var groupedData = ipcData.GroupBy(d => d.IPC);
+            // remove IPCs that have less than minTime data records
+            // var cleanedData = ipcData.Where(x =>
+            //     groupedData.Count() >= minTime
+            // ).ToList();
+
+            // remove whole data of the IPCs that have less than 20 rows of data
+            foreach (var group in groupedData)
+            {
+                if (group.Count() < minTime)
+                {
+                    Console.WriteLine($"Removing IPC: {group.Key}");
+                    ipcData.RemoveAll(d => d.IPC == group.Key);
+                }
+            }
+
+            return ipcData;
         }
 
         /// <summary>

@@ -21,7 +21,7 @@ namespace BlazorInterview.Models
             var cleanedCpuMHz = cpuMHz.Split()[0];
             return int.Parse(cleanedCpuMHz);
         }
-        // if value is 2 times larger than the maxCpuMHz, remove it
+        // if value is larger than the maxCpuMHz, remove it
         public static double CleanValues(double value, double maxCpuMHz)
         {
             return value <= maxCpuMHz ? value : 0;
