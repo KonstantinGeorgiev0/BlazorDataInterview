@@ -67,6 +67,7 @@ else
     private List<IPCData> IpcData = new List<IPCData>();
     private int avgThreshold = 10;
     private int peakThreshold = 20;
+    private int maxValueThreshold = 60;
     private string csvFilePath = "sample-data/testcase_smart_applicator_V8.2_020823.zip.csv";
 
     // Variables for bar chart Factory Utilization Distribution
@@ -141,7 +142,8 @@ else
             {
                 IPC = ipcGroup.Key,
                 AvgValue = ipcGroup.Average(d => d.AvgValue),
-                MaxValue = ipcGroup.Average(d => d.MaxValue),
+                PeakValue = ipcGroup.Average(d => d.MaxValue),
+                MaxValue = ipcGroup.Max(d => d.MaxValue),
                 CpuMHz = ipcGroup.Select(d => d.CpuMHz).FirstOrDefault()
             })
             .ToList();
@@ -149,7 +151,8 @@ else
         var uniqueIPCs = factoryData.Select(d => d.IPC).Distinct().ToList().Count();
         var underutilized = factoryData
             .Count(d => d.AvgValue / d.CpuMHz * 100 < avgThreshold &&
-                d.MaxValue / d.CpuMHz * 100 < peakThreshold);
+                d.PeakValue / d.CpuMHz * 100 < peakThreshold &&
+                d.MaxValue / d.CpuMHz * 100 < maxValueThreshold);
         var notUnderutilized = factoryData.Count() - underutilized;
 
         // load variables for bar charts Factory Utilization Distribution

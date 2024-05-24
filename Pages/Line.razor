@@ -144,6 +144,7 @@ else
     private List<IPCData> IPCData = new List<IPCData>();
     private int peakThreshold = 20;
     private int avgThreshold = 10;
+    private int maxValueThreshold = 60;
 
     // variables for input select
     public int selectedCpuMHz { get; set; }
@@ -234,7 +235,10 @@ else
         var avgValues = dataCpuMhz.Select(d => d.AvgValue).ToArray();
         var averageUtilizationRate = Math.Round(avgValues.Average() / cpuMHz * 100, 2);
         var peakUtilizationRate = Math.Round(maxValues.Average() / cpuMHz * 100, 2);
-        var isUnderutilized = averageUtilizationRate < avgThreshold && peakUtilizationRate < peakThreshold;
+        var maxValueRate = Math.Round(maxValues.Max() / cpuMHz * 100, 2);
+        var isUnderutilized = averageUtilizationRate < avgThreshold &&
+            peakUtilizationRate < peakThreshold && 
+            maxValueRate < maxValueThreshold;
         var distinctIPCs = dataCpuMhz.Select(d => d.IPC).Distinct().ToArray();
 
         var ChartSeries = new List<ChartSeries>

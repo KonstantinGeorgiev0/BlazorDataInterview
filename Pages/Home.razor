@@ -9,14 +9,14 @@
 <PageTitle>Smart Applicator</PageTitle>
 
 <div style="text-align: center;">
-    <h1>Project Objective: Determine which Industrial PCs (IPCs) are to be downsized</h1>
+    <h1>Project Objective: Determine which Industrial PCs (IPCs) are not using their full capacity</h1>
 </div>
 
-<h3>An IPC is considered underutilized if its Average Utilization Rate is below @averageUtilizationRateThreshold% and its Peak Utilization Rate is below @peakUtilizationRateThreshold%.</h3>
+<h3>An IPC is considered underutilized if its Average Utilization Rate is below @averageUtilizationRateThreshold%, its Peak Utilization Rate is below @peakUtilizationRateThreshold%, and its Max Utilization is below @maxValueThreshold%.</h3>
 
 <div>
     <p>
-        There are a total of @(ipcData?.Count() ?? 0) data entries and @(IPCs?.Count() ?? 0) unique IPCs.
+        There are a total of @(ipcData?.Count() ?? 0) data rows and @(IPCs?.Count() ?? 0) unique IPCs.
         <br>Total number of Underutilized IPCs is @(underutilizedIPCs).
     </p>
 </div>
@@ -35,6 +35,7 @@ else
             <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.DataFactory)">Data Factory</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.AverageUtilizationRate)">Average Utilization</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.PeakUtilizationRate)">Peak Utilization</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.MaxValue)">Max Utilization</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.CpuMHz)">CPU (MHz)</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<DataModel, object>(x=>x.IsUnderutilized)">Underutilized</MudTableSortLabel></MudTh>
         </HeaderContent>
@@ -43,6 +44,7 @@ else
             <MudTd DataLabel="Data Factory">@context.DataFactory</MudTd>
             <MudTd DataLabel="Average Utilization">@context.AverageUtilizationRate</MudTd>
             <MudTd DataLabel="Peak Utilization">@context.PeakUtilizationRate</MudTd>
+            <MudTd DataLabel="Max Utilization">@context.MaxValue</MudTd>
             <MudTd DataLabel="CPU (MHz)">@context.CpuMHz</MudTd>
             <MudTd DataLabel="Underutilized">@context.IsUnderutilized</MudTd>
         </RowTemplate>
@@ -68,8 +70,9 @@ else
     private List<IPCData> ipcData;
     private List<string> IPCs;
     private int underutilizedIPCs = 0; 
-    public int averageUtilizationRateThreshold = 10;
-    public int peakUtilizationRateThreshold = 20;
+    private int averageUtilizationRateThreshold = 10;
+    private int peakUtilizationRateThreshold = 20;
+    private int maxValueThreshold = 60;
 
     // Search term property
     private string searchTerm = string.Empty;
@@ -108,9 +111,11 @@ else
                 DataFactory = group.First().DataFactory,
                 AverageUtilizationRate = group.Average(data => data.AvgValue),
                 PeakUtilizationRate = group.Average(data => data.MaxValue),
+                MaxValue = group.Max(data => data.MaxValue),
                 CpuMHz = group.First().CpuMHz,
                 IsUnderutilized = group.Average(data => data.AvgValue / data.CpuMHz * 100) < averageUtilizationRateThreshold &&
-                    group.Average(data => data.MaxValue / data.CpuMHz * 100) < peakUtilizationRateThreshold
+                    group.Average(data => data.MaxValue / data.CpuMHz * 100) < peakUtilizationRateThreshold &&
+                    group.Max(data => data.MaxValue / data.CpuMHz * 100) < maxValueThreshold
             });
         underutilizedIPCs = Elements.Count(data => data.IsUnderutilized);
     }
@@ -124,6 +129,7 @@ else
         public int DataFactory { get; set; }
         public double AverageUtilizationRate { get; set; }
         public double PeakUtilizationRate { get; set; }
+        public double MaxValue { get; set; }
         public int CpuMHz { get; set; }
         public bool IsUnderutilized { get; set; }
     }

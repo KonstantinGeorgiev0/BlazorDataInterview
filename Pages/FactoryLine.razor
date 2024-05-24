@@ -148,7 +148,9 @@ else
         avgCpuMHz = (int)dataFactory.Select(d => d.CpuMHz).Average();
         var averageUtilizationRate = Math.Round(avgValues.Average() / avgCpuMHz * 100, 2);
         var peakUtilizationRate = Math.Round(maxValues.Average() / avgCpuMHz * 100, 2);
-        var isUnderutilized = averageUtilizationRate < avgThreshold && peakUtilizationRate < peakThreshold;
+        var maxUtilizationRate = Math.Round(maxValues.Max() / avgCpuMHz * 100, 2);
+        var isUnderutilized = averageUtilizationRate < avgThreshold &&
+            peakUtilizationRate < peakThreshold;
         var distinctIPCs = dataFactory.Select(d => d.IPC).Distinct().ToList();
 
         var ChartSeries = new List<ChartSeries>
