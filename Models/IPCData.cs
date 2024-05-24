@@ -11,13 +11,13 @@ namespace BlazorInterview.Models
         public string MetricID { get; set; }
         public int CpuMHz { get; set; } 
 
-        // Calculated properties for utilization rates
-        public double AverageUtilizationRate => AvgValue / CpuMHz * 100;
-        public double PeakUtilizationRate => MaxValue / CpuMHz * 100;
+        // Properties for utilization rates
+        public double AverageUtilizationRate { get; set; }
+        public double PeakUtilizationRate { get; set; }
 
+        // If white space is encountered, remove everything after it
         public static int CleanCpuMHz(string cpuMHz)
         {
-            // If white space is encountered, remove everything after it
             var cleanedCpuMHz = cpuMHz.Split()[0];
             return int.Parse(cleanedCpuMHz);
         }

@@ -60,7 +60,6 @@ else
     private bool isLoading = true;
     // variables for line chart
     private List<ChartSeries> Series = new List<ChartSeries>();
-    private string[] XAxisLabels = Array.Empty<string>();
     private int Index = -1;
     private ChartOptions Options = new ChartOptions();
     private Dictionary<int, ChartData> chartDataByFactory = new Dictionary<int, ChartData>();
@@ -86,6 +85,7 @@ else
 
     private async Task LoadData()
     {
+        // load data
         IPCData = await DataService.LoadDataAsync(csvFilePath);
         // Group data by value of Data Factory, then by date, and take averages of avg and max Values for each day
         var groupedData = IPCData
@@ -114,15 +114,6 @@ else
         }
         // set default selected factory
         selectedFactory = FactoryValues.FirstOrDefault();
-
-        var ipcData = IPCData
-            .Where(d => d.IPC.Equals("ITLT4301"))
-            .OrderBy(d => d.Time)
-            .ToList();
-
-        XAxisLabels = ipcData
-            .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
-            .ToArray();
     }
     private class ChartData
     {
@@ -139,6 +130,10 @@ else
         selectedFactory = int.Parse(e.Value.ToString());
         StateHasChanged();
     }
+    /// <summary>
+    /// Load data for each factory. 
+    /// Take average and peak utilization rates, and determine whether the IPC is underutilized.
+    /// </summary>
     private void LoadFactoryChartData(List<IPCData> groupedData, int factory)
     {
         var dataFactory = groupedData.Where(d => d.DataFactory == factory).ToList();
@@ -150,15 +145,17 @@ else
         var peakUtilizationRate = Math.Round(maxValues.Average() / avgCpuMHz * 100, 2);
         var maxUtilizationRate = Math.Round(maxValues.Max() / avgCpuMHz * 100, 2);
         var isUnderutilized = averageUtilizationRate < avgThreshold &&
-            peakUtilizationRate < peakThreshold;
+                peakUtilizationRate < peakThreshold;
         var distinctIPCs = dataFactory.Select(d => d.IPC).Distinct().ToList();
 
+        // create series for line chart
         var ChartSeries = new List<ChartSeries>
         {
             new ChartSeries { Name = "Peak Utilization", Data = maxValues },
             new ChartSeries { Name = "Average Utilization", Data = avgValues }
         };
 
+        // add data to dictionary
         chartDataByFactory.Add(factory, new ChartData 
         { 
             Series = ChartSeries, 

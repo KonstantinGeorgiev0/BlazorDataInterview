@@ -96,16 +96,18 @@ else
 
     private async Task LoadData()
     {
+        // Load data from CSV file
         IpcData = await DataService.LoadDataAsync(csvFilePath);
 
         // Get unique factory values
         FactoryValues = IpcData.Select(d => d.DataFactory).Distinct().ToList();
-        // Calculate total number of underutilized IPCs per Data Factory
+        // For each factory, load data for its bar chart
         foreach (var factory in FactoryValues)
         {
             LoadBarData(factory);
         }
         
+        // Create series for bar chart Factory Utilization Distribution
         dataUnderutilized = underUtilizedPerFactory.ToArray();
         dataUtilized = utilizedPerFactory.ToArray();
         dataTotal = ipcTotalPerFactory.ToArray();
@@ -162,6 +164,7 @@ else
         utilizedTotal += notUnderutilized;
         ipcTotalPerFactory.Add(uniqueIPCs);
     }
+    // Handle input select change
     private void OnFactorySelectionChange(ChangeEventArgs e)
     {
         SelectedFactory = Convert.ToInt32(e.Value);

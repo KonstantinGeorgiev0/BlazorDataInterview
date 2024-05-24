@@ -117,6 +117,7 @@ else
                     group.Average(data => data.MaxValue / data.CpuMHz * 100) < peakUtilizationRateThreshold &&
                     group.Max(data => data.MaxValue / data.CpuMHz * 100) < maxValueThreshold
             });
+        // count underutilized IPCs
         underutilizedIPCs = Elements.Count(data => data.IsUnderutilized);
     }
 

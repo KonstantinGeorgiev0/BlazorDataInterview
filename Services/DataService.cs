@@ -120,10 +120,6 @@ namespace BlazorInterview.Services
         {
             // group the data by IPC
             var groupedData = ipcData.GroupBy(d => d.IPC);
-            // remove IPCs that have less than minTime data records
-            // var cleanedData = ipcData.Where(x =>
-            //     groupedData.Count() >= minTime
-            // ).ToList();
 
             // remove whole data of the IPCs that have less than 20 rows of data
             foreach (var group in groupedData)

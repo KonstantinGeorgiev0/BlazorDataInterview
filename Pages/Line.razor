@@ -194,7 +194,7 @@ else
             .ToList();
 
         CpuMHzValues = IPCData.Select(d => d.CpuMHz).Distinct().ToList();
-        // Select the first 20 IPCs with the lowest average AvgValue and MaxValue
+        // Select the first 30 IPCs with the lowest average AvgValue and MaxValue
         IpcValuesMin = groupedDataIpc
             .OrderBy(ipc => ipc.AvgValue)
             .ThenBy(ipc => ipc.MaxValue)
@@ -212,7 +212,6 @@ else
             .Union(IpcValuesMax)
             .Distinct()
             .ToList();
-        Console.WriteLine($"Count of IPC: {IpcValues.Count()}");
 
         foreach (var cpuMHz in CpuMHzValues)
         {
@@ -260,38 +259,6 @@ else
             IsUnderutilized = isUnderutilized
         });
     }
-
-    @* private void LoadChartData<T>(Dictionary<T, ChartData> chartData, List<IPCData> groupedData, T key, bool isCpuMHz)
-    {
-        var data = isCpuMHz
-            ? groupedData.Where(d => d.CpuMHz.ToString().Equals(key.ToString())).ToList()
-            : groupedData.Where(d => d.IPC.Equals(key.ToString())).ToList();
-
-        var maxValues = data.Select(d => d.MaxValue).ToArray();
-        var avgValues = data.Select(d => d.AvgValue).ToArray();
-        var cpuMHz = data.Select(d => d.CpuMHz).FirstOrDefault();
-        var avgUtilization = avgValues.Average() / cpuMHz * 100;
-        var maxUtilization = maxValues.Average() / cpuMHz * 100;
-
-        var ChartSeries = new List<ChartSeries>
-        {
-            new ChartSeries { Name = "Peak Utilization", Data = maxValues },
-            new ChartSeries { Name = "Average Utilization", Data = avgValues }
-        };
-
-        var XAxisLabels = data
-            .Select((d, index) => index % 2 == 0 ? d.Time.ToString("dd") : "")
-            .ToArray();
-
-        chartData.Add(key, new ChartData
-        {
-            Series = ChartSeries,
-            XAxisLabels = XAxisLabels,
-            AverageUtilizationRate = Math.Round(avgUtilization, 2),
-            PeakUtilizationRate = Math.Round(maxUtilization, 2),
-            IsUnderutilized = avgUtilization < avgThreshold && maxUtilization < peakThreshold
-        });
-    } *@
 
     // Load data for the selected IPC
     private void LoadIpcChartData(string ipcId)
