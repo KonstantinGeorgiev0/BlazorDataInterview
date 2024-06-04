@@ -16,5 +16,7 @@ builder.Services.AddBlazorBootstrap();
 builder.Services.AddMudServices();
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+// Register IDataService with a scoped lifetime
+builder.Services.AddScoped<IDataService, DataService>();
 
 await builder.Build().RunAsync();
