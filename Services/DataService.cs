@@ -2,14 +2,13 @@ using BlazorInterview.Models;
 using CsvHelper;
 using CsvHelper.Configuration;
 using System.Globalization;
-using System.Reflection;
 
 namespace BlazorInterview.Services
 {
     /// <summary>
     /// Service class for loading and manipulating IPCData.
     /// </summary>
-    public class DataService
+    public class DataService : IDataService
     {
         private readonly HttpClient _httpClient;
 
@@ -64,6 +63,8 @@ namespace BlazorInterview.Services
                 listOfIpcData = RemoveMissingData(listOfIpcData);
                 // Remove IPCs that have less than 20 data records
                 listOfIpcData = RemoveIPCsBasedOnTimePeriod(listOfIpcData, 20);
+                // Remove IPCs that have AvgValue less than MinValue or greater than MaxValue
+                listOfIpcData = RemoveAvgValues(listOfIpcData);
                 // Check if any of the IPCData objects in the list have incorrect data
                 if (CheckForWrongData(listOfIpcData)) {
                     throw new Exception("Incorrect data in the CSV file.");
@@ -80,7 +81,7 @@ namespace BlazorInterview.Services
         /// <summary>
         /// Checks if any of the IPCData objects in the list have incorrect data.
         /// </summary>
-        public static bool CheckForWrongData(List<IPCData> ipcData)
+        public bool CheckForWrongData(List<IPCData> ipcData)
         {
             return ipcData.Any(x =>
                 string.IsNullOrEmpty(x.IPC) ||
@@ -96,7 +97,7 @@ namespace BlazorInterview.Services
         /// <summary>
         /// Removes IPCData objects with missing data from the list.
         /// </summary>
-        public static List<IPCData> RemoveMissingData(List<IPCData> ipcData)
+        public List<IPCData> RemoveMissingData(List<IPCData> ipcData)
         {
             var originalData = new List<IPCData>(ipcData);
             // Check if any of the entries have missing data and if so, remove them
@@ -116,7 +117,7 @@ namespace BlazorInterview.Services
         /// <summary>
         /// Remove IPCs that have less than minTime data records.
         /// </summary>
-        public static List<IPCData> RemoveIPCsBasedOnTimePeriod(List<IPCData> ipcData, int minTime)
+        public List<IPCData> RemoveIPCsBasedOnTimePeriod(List<IPCData> ipcData, int minTime)
         {
             // group the data by IPC
             var groupedData = ipcData.GroupBy(d => d.IPC);
@@ -126,12 +127,25 @@ namespace BlazorInterview.Services
             {
                 if (group.Count() < minTime)
                 {
-                    Console.WriteLine($"Removing IPC: {group.Key}");
                     ipcData.RemoveAll(d => d.IPC == group.Key);
                 }
             }
-
             return ipcData;
+        }
+
+        /// <summary>
+        /// Remove IPCs that have AvgValue less than MinValue or greater than MaxValue.
+        /// </summary>
+        public List<IPCData> RemoveAvgValues(List<IPCData> ipcData)
+        {
+            // validate input
+            if (ipcData == null || ipcData.Count == 0)
+            {
+                return new List<IPCData>();
+            }
+            // take only those rows that have avg value more than min, and less than max
+            var cleanedData = ipcData.Where(d => d.AvgValue >= d.MinValue && d.AvgValue <= d.MaxValue).ToList();
+            return cleanedData;
         }
 
         /// <summary>
@@ -139,7 +153,7 @@ namespace BlazorInterview.Services
         /// Take the most frequent CpuMHz value for each IPC and set it for all entries with that IPC. 
         /// </summary>
         /// <param name="ipcData">The list of IPCData objects.</param>
-        public static void NormalizeCpuMHz(List<IPCData> ipcData)
+        public void NormalizeCpuMHz(List<IPCData> ipcData)
         {
             // group the data by IPC
             var groupedData = ipcData.GroupBy(d => d.IPC);
@@ -166,7 +180,7 @@ namespace BlazorInterview.Services
         /// </summary>
         /// <param name="ipcDataList">The list of IPCData objects.</param>
         /// <returns>True if all the entries have the same MetricID, otherwise false.</returns>
-        public static bool CheckMetricIDs(List<IPCData> ipcDataList)
+        public bool CheckMetricIDs(List<IPCData> ipcDataList)
         {
             if (ipcDataList.Count == 0)
             {
