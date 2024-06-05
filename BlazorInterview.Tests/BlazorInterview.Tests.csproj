@@ -35,7 +35,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlazorInterview\BlazorInterview.csproj" />
-    <ProjectReference Include="..\MainProject\BlazorInterview.csproj" />
   </ItemGroup>
 
 </Project>
