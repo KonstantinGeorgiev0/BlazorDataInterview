@@ -9,7 +9,7 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // Register DataService
-builder.Services.AddScoped<DataService>();
+// builder.Services.AddScoped<DataService>();
 // Register Bootstrap
 builder.Services.AddBlazorBootstrap();
 // Register MudBlazor

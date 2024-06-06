@@ -3,7 +3,7 @@
 @using MudBlazor.Charts
 @using BlazorInterview.Models
 @using BlazorInterview.Services
-@inject DataService DataService
+@inject IDataService DataService
 
 <PageTitle>Pie Charts</PageTitle>
 
@@ -13,9 +13,9 @@
     <p style="text-align: justify; width: 100%">
         Pie Chart showcasing Industrial PCs (IPCs) grouped by their Data Factory number.
         <br>The Pie Chart shows the number of underutilized and not underutilized IPCs for each Data Factory.
-        <br>An IPC is considered underutilized if its average utilization 
+        @* <br>An IPC is considered underutilized if its average utilization 
         rate is below @avgThreshold% and its peak utilization rate is below @peakThreshold%.
-        <br>Average and peak utilization rates are calculated as a percentage of the IPC's CPU MHz.
+        <br>Average and peak utilization rates are calculated as a percentage of the IPC's CPU MHz. *@
     </p>
     <div style="justify-content: center; margin-top: 5px; margin-bottom: 5px;">
         <p>Choose a Data Factory number that you would like to see the chart of:</p>
@@ -183,7 +183,7 @@ else{
     private void OnFactorySelectionChange(ChangeEventArgs e)
     {
         selectedFactory = Convert.ToInt32(e.Value);
-        LoadPieData(selectedFactory);
+        @* LoadPieData(selectedFactory); *@
         StateHasChanged();
     }
 
