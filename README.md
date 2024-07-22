@@ -12,5 +12,7 @@ Use these measurements to define if there are IPC's that do not use their full c
 ## Getting started
 Run the command `dotnet build` to install all required packages.
 
-To start the web page, run `dotnet watch` to start the webpack dev server. This server is reachable at `localhost:5157`
+To start the web page, go to folder `BlazorInterview` and run `dotnet watch` to start the webpack dev server. This server is reachable at `localhost:5157`
 and autoreloads any changes you make in the code.
+
+To test the project, go to folder `BlazorInterview.Tests` and run `dotnet test`. 
